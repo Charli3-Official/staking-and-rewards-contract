@@ -1,0 +1,17 @@
+{
+  "name": "iagon-staking-offchain",
+  "version": "1.0.0",
+  "description": "offchain code for Staking & reward contract",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --experimental-specifier-resolution=node main.js"
+  },
+  "author": "piyushchain",
+  "license": "ISC",
+  "dependencies": {
+    "cbor": "^9.0.1",
+    "lucid-cardano": "^0.10.7"
+  }
+}

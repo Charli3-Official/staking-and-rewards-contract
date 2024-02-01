@@ -1,0 +1,456 @@
+{
+  "preamble": {
+    "title": "iagon/staking",
+    "description": "Aiken contracts for project 'iagon/staking'",
+    "version": "0.0.0",
+    "plutusVersion": "v2",
+    "compiler": {
+      "name": "Aiken",
+      "version": "v1.0.20-alpha+unknown"
+    },
+    "license": "Apache-2.0"
+  },
+  "validators": [
+    {
+      "title": "reward.reward",
+      "datum": {
+        "title": "_datum",
+        "schema": {
+          "$ref": "#/definitions/Data"
+        }
+      },
+      "redeemer": {
+        "title": "redeemer",
+        "schema": {
+          "$ref": "#/definitions/Option$Tuple$ByteArray_ByteArray"
+        }
+      },
+      "parameters": [
+        {
+          "title": "operator_vkey",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        },
+        {
+          "title": "owner_pubkey_hash",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "59078601000032323232323232323223223222232533300b323232533300e3370e90000018991919191999991919191919111119299980e99b8748000c0700044c8c8c8c94ccc090c09c0084c8c94ccc098c0a400854ccc08cccdca80580500489919299981299b8748000c0900044c8c8c94ccc0a14ccc0a0cc88c8c94ccc0b0cdc3a4004002266e24dd6981898150010018a50302a001301d302830133028002302d302e302e302e302e302e302e302e3026301b302600d375a6022604c00a2660386036604c01a6eb8c050c09801452808008a503375e6e98004c0b0c0b4c0b4c0b4c094010cc88c8ccc00400400c0088894ccc0b800840044c8ccc010010c0c800ccccc8888c8cc00400401c894ccc0d40044cc0d8cdd81ba9006374c00a97adef6c6013232323253330363375e6600e014004980103d879800013303a337606ea4028dd30048028a99981b19b8f00a0021323253330383370e900000089981e19bb03752018607a606c00400a200a606c00266601001401200226607466ec0dd48011ba6001330060060033756606e0066eb8c0d4008c0e4008c0dc004dd718168009bab302e001222325333030533303300114a22940530103d87a800013374a90001981a1ba60014bd7019199800800801801111299981a8010800899199802002181c80199999111191980080080391299981e00089981e99bb0375200c6ea00152f5bded8c0264646464a66607a66ebccc01c028009300103d8798000133041337606ea4028dd40048028a99981e99b8f00a00213232533303f3370e900000089982199bb037520186088607a00400a200a607a00266601001401200226608266ec0dd48011ba800133006006003375a607c0066eb8c0f0008c100008c0f8004dd7181a0009bad30350012223253330373370e00290000a6103d87a800013374a90001981d9ba80014bd7019b8000200101d3037002016303000232323300100100222533302c00114bd6f7b63009919191981819bb037520026e98c8c8cc004004008894ccc0c800452f5bded8c02646606866ec0dd49bae3031001375066e052000375a606400266006006606c00460680026eacc0b800ccc014014008dd71816001181800118170009bab300f30240043756601e6048601e604800c60460022c660226eb0c05cc088c05cc088024c05cc088004ccc888c94ccc09ccdc3a4000604c002264646400464a66605466e1d2000001132323232323232325333035303800213232498cc0840088c8c8cc0900048c8dd6981d0011bae30380013756606e0046eb8c0d4004c94ccc0cccdc3a4000002264646464a666074607a0042649319299981c19b87480000044c8c94ccc0f4c10000852616375c607c002606c0082c606c0062c6eb4c0ec004c0ec008c0e4004c0c402058c0c401c58dd5981b000981b0011bae30340013034002375a60640026064004606000260500042c6050002605a002604a0022c6464a66605066e1d2002001132533302c00114c103d87a800013374a9000198169817000a5eb80c8cc004004018894ccc0b400452f5c0264646464a66605c66e1d20020011330060060031330323033302c00233006006003302c0013232533302e3370e900200089919299981819b8f37286ecc00402c4cdd2a40006606800297ae014c0103d87a80003034001302c00214c103d87a8000302c0013018302a0023031002302f00110023026001323300100100322533302b00114c103d87a8000132323232533302c3371e00e004266e952000330300014bd7009980300300198168019bae302b002302f002302d001330270014bd701bab3028302930293029302930293029302930293029302930213016302100800a161630270013300c3758601a603e6028603e00c466ebcc054c080004c054c080c02cc08000858c094004c8cc02cdd61809980f1809980f002919baf3014301f300a301f0010023012301d3008301d0013023001301b001163232533301e3370e90010008998059bac3011301c3011301c0033023301c00214c103d87a8000301c0013005301a0012301d301e00122533301833720004002298103d8798000153330183371e0040022980103d87a800014c103d87b800022323300100100322533301c00114bd7009919299980d980280109980f801198020020008998020020009810001180f0009180d180d980d80091191980080080191299980d0008a60103d87a80001323253330193375e6018602e00400a266e9520003301d0024bd70099802002000980f001180e00091191980080080191299980c8008a4c26466006006603a0046006603600201c0020040126eb8c048008dd718090009919bb030150013015301600137586028002601800c2660046002601800a01046026002446644646600200200644a66602a00229404c8c94ccc050c014008528899802002000980c8011bae301700137586026602860286028602860286028602860286018004466e3c004008c02800c5261365632533300b3370e9000000899192999808180980109924c646eb8c040008dd718070008b1919bb03012001301230130013758602200260120062a66601666e1d20020011533300e300900314985858c024008dd70009bae001230053754002460066ea80055cd2ab9d5573caae7d5d02ba157441",
+      "hash": "d6cecd60a6be24e14842e2a03ab9c612f2c3fc09d15b713a49dafe09"
+    },
+    {
+      "title": "staking.stake",
+      "datum": {
+        "title": "datum",
+        "schema": {
+          "$ref": "#/definitions/iagon~1staking~1staking_validator~1StakeDatum"
+        }
+      },
+      "redeemer": {
+        "title": "redeemer",
+        "schema": {
+          "$ref": "#/definitions/iagon~1staking~1staking_validator~1StakingRedeemer"
+        }
+      },
+      "parameters": [
+        {
+          "title": "operator_vkey",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        },
+        {
+          "title": "penalty_addr",
+          "schema": {
+            "$ref": "#/definitions/aiken~1transaction~1credential~1Address"
+          }
+        }
+      ],
+      "compiledCode": "590a62010000323232323232323232232222232323232533300d3333332323232323232323232323222222323232533302133223322323300100100322533302a00114a026464a666052600a00429444cc010010004c0b8008dd718160009bac302830293029302930293029302930293029302100223371e0020046026603e0086eb8c04cc07c0184c94ccc088cdc3a40006042002264646464a666052605800426464646464a666056666e540480080044c8c94ccc0b4cdc3a4000605800226464a66605e64a66606066e1d2000302f0011323322323253330353370e9001000899b89375a607460660040062940c0cc004c094c0c4c088c0c4008c07cc0bcc08cc0bc050dd69810181780198170008b1980e1bac3021302d3021302d0123021302d00113253330303370e9000000899299981a181b8050991919299981a299981a299981a299981a00108018a50100114a0266038604a606400c6eb4c094c0c80245280a99981a299981a299981a19b8f375c604c60640326eb8c098c0c80244cdd79ba63303832337606074002607460760026eb0c08cc0c80652f5bded8c06e98cc0e0c8cdd8181d000981d181d8009bac302330320094bd6f7b6300a5013375e6040606403298103d879800014a0266ebcc080c0c802530103d87a800014a02940cc07000c028cc070c080c0c0c090c0c0054dd69811981800b99b8733301c37566040605e0020240220162c606a0122a66606066e1d2002001132325333032533303200113375e603c606002e980103d87a800014a02666666444444a66607066e1c014010528899299981c99b8748000c0e00044c8c8c94ccc0f0cdc424000002266e24cdc08048040008a5033302637566054607200200c00a607e002606e0022c6605600c466ebcc0acc0dc004008dd6181198181812181800a80600100980900c0a503301b301f302f3023302f014375a6044605e02c6660366eacc070c0b80080440404c94ccc0d0c0dc0284c8c8c8c94ccc0d54ccc0d54ccc0d54ccc0d4004400852809980f0028060a5015333035533303553330353371e6eb8c09cc0cc068dd718139819805099baf374c660726466ec0c0ec004c0ecc0f0004dd61812181980525eb7bdb180dd31981c9919bb0303b001303b303c00137586048606603497adef6c6014a0266ebcc084c0cc069300103d879800014a0266ebcc084c0cc02930103d879800014a029404cc074c098c0cc01cdd6981318198050a503370e00400666e20034004ccc074dd59810981800100980919980e1bab301d302f003012011163035009302e01314a0606600260560022c60626064606460646064605400266644464a66605e66e1d2000302e001132323200230270013035001302d00116323253330303370e9001000899299981a0008a60103d87a800013374a90001981a981b000a5eb80c8cc004004018894ccc0d400452f5c0264646464a66606c66e1d200200113300600600313303a303b3034002330060060033034001323253330363370e900200089919299981c19b8f37286ecc00402c4cdd2a40006607800297ae014c0103d87a8000303c001303400214c103d87a8000303400130253032002303900230370011002302e001323300100100322533303300114c103d87a800013232323253330343371e00e004266e952000330380014bd70099803003001981a8019bae303300230370023035001375860386052603a605201c6eacc0c0c0c4c0c4c0c4c0c4c0c4c0c4c0c4c0c4c0c4c0c4c0a4c074c0a403800858dd718160011bae302a0013253330293370e900000089919bb0302f001302f3030001302700d153330293370e900100089919bb0302f001302f3030001302700d13233760605e002605e6060002604e01a604e0186602e6eb0c060c094c064c0940288cdd7980d1813000980d1813180b98130029998089bab301530243015302400100700616302a00132330153758602e6046602e6046010466ebcc060c090c054c090004008c058c088c04cc088004c0a0004c08000458c8c94ccc08ccdc3a40040022660206eb0c054c084c054c084018c0a0c084008530103d87a800030210013010301f00416375c60440046eb8c080004c8cdd81812000981218128009bac300d301c003223375e00466e9520003301e375000297ae0223232533301b3370e9001000899b8f375c604060320040062940c064004c028c05c00888c8c94ccc068cdc3a4004002266e2400cdd6980f980c0010a503018001300a3016300a301600222232332232533301c3370e9001000880109bad3021301a003301a00232533301a3370e90010008a6103d87a8000132323300100100222533302000114c103d87a800013232323253330213371e014004266e95200033025375000297ae0133006006003375a60440066eb8c080008c090008c088004dd5980f980c001180c000a4000646600200200844a66603a0022980103d87a8000132323232533301e3371e010004266e95200033022374c00297ae01330060060033756603e0066eb8c074008c084008c07c0048c068c06cc06cc06c00488cc0200088cdd79804180a0008011180c180c980c980c980c980c980c980c8009180b980c00091191980080080191299980b8008a5eb804c8c94ccc058c0140084cc068008cc0100100044cc010010004c06c008c0640048c054c058c0580048c05000488c8cc00400400c894ccc0500045300103d87a8000132325333013300500213374a90001980b80125eb804cc010010004c060008c05800402402001c0180145261365632533300d3370e9000000899191919299980a180b8010a4c2c6eb8c054004c054008dd7180980098058030a99980699b87480080044c8c8c8c94ccc050c05c00852616375c602a002602a0046eb8c04c004c02c01854ccc034cdc3a4008002264646464a666028602e0042930b1bae30150013015002375c6026002601600c2c601600a600200a464a66601866e1d20000011323232323232323232325333019301c0021323232498c94ccc064cdc3a400000226464a66603c60420042649319299980e19b87480000044c8c8c8c8c8c8c8c94ccc09cc0a80084c8c8c9263301d0032323233020001232375a605a0046eb8c0ac004dd598150011bae30280013253330263370e900000089919299981598170010a4c2c6eb4c0b0004c09001454ccc098cdc3a40040022a666052604800a2930b0b181200219299981299b87480000044c8c8c8c94ccc0b0c0bc0084c92632533302a3370e900000089919299981798190010a4c2c6eb8c0c0004c0a001058c0a000c58dd698168009816801181580098118040b18118038b1bab3028001302800230260013026002375a60480026048004604400260340042c60340022c603e002602e0082a66603266e1d20020011533301c301700414985858c05c00cc94ccc060cdc3a40000022a666036602c00a2930b0a99980c19b874800800454ccc06cc0580145261616301600432375c60320106eb8c05c01c58c068004c068008c060004c060008dd6980b000980b0011919bb03015001301530160013758602800260280046eb8c048004c02800858c02800488c8cc00400400c894ccc04000452613233003003301400230033012001375c0024600a6ea80048c00cdd5000ab9a5573aaae7955cfaba05742ae881",
+      "hash": "9351369ec324d433ccf76a8c6b22f6f6ddbc7a99c81c574ecdbd481f"
+    }
+  ],
+  "definitions": {
+    "ByteArray": {
+      "dataType": "bytes"
+    },
+    "Data": {
+      "title": "Data",
+      "description": "Any Plutus data."
+    },
+    "Int": {
+      "dataType": "integer"
+    },
+    "Option$Int": {
+      "title": "Optional",
+      "anyOf": [
+        {
+          "title": "Some",
+          "description": "An optional value.",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        },
+        {
+          "title": "None",
+          "description": "Nothing.",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "Option$Tuple$ByteArray_ByteArray": {
+      "title": "Optional",
+      "anyOf": [
+        {
+          "title": "Some",
+          "description": "An optional value.",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/Tuple$ByteArray_ByteArray"
+            }
+          ]
+        },
+        {
+          "title": "None",
+          "description": "Nothing.",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "Option$aiken/transaction/credential/Referenced$aiken/transaction/credential/Credential": {
+      "title": "Optional",
+      "anyOf": [
+        {
+          "title": "Some",
+          "description": "An optional value.",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/aiken~1transaction~1credential~1Referenced$aiken~1transaction~1credential~1Credential"
+            }
+          ]
+        },
+        {
+          "title": "None",
+          "description": "Nothing.",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "Option$iagon/staking/staking_validator/StakingCertificate": {
+      "title": "Optional",
+      "anyOf": [
+        {
+          "title": "Some",
+          "description": "An optional value.",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/iagon~1staking~1staking_validator~1StakingCertificate"
+            }
+          ]
+        },
+        {
+          "title": "None",
+          "description": "Nothing.",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "Tuple$ByteArray_ByteArray": {
+      "title": "Tuple",
+      "dataType": "list",
+      "items": [
+        {
+          "$ref": "#/definitions/ByteArray"
+        },
+        {
+          "$ref": "#/definitions/ByteArray"
+        }
+      ]
+    },
+    "aiken/dict/Dict$ByteArray_Int": {
+      "title": "Dict",
+      "description": "An opaque `Dict`. The type is opaque because the module maintains some\n invariant, namely: there's only one occurrence of a given key in the dictionary.\n\n Note that the `key` parameter is a phantom-type, and only present as a\n means of documentation. Keys can be any type, yet will need to comparable\n to use functions like `insert`.\n\n See for example:\n\n ```aiken\n pub type Value =\n   Dict<PolicyId, Dict<AssetName, Int>>\n ```",
+      "dataType": "map",
+      "keys": {
+        "$ref": "#/definitions/ByteArray"
+      },
+      "values": {
+        "$ref": "#/definitions/Int"
+      }
+    },
+    "aiken/transaction/OutputReference": {
+      "title": "OutputReference",
+      "description": "An `OutputReference` is a unique reference to an output on-chain. The `output_index`\n corresponds to the position in the output list of the transaction (identified by its id)\n that produced that output",
+      "anyOf": [
+        {
+          "title": "OutputReference",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "transaction_id",
+              "$ref": "#/definitions/aiken~1transaction~1TransactionId"
+            },
+            {
+              "title": "output_index",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "aiken/transaction/TransactionId": {
+      "title": "TransactionId",
+      "description": "A unique transaction identifier, as the hash of a transaction body. Note that the transaction id\n isn't a direct hash of the `Transaction` as visible on-chain. Rather, they correspond to hash\n digests of transaction body as they are serialized on the network.",
+      "anyOf": [
+        {
+          "title": "TransactionId",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "hash",
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        }
+      ]
+    },
+    "aiken/transaction/credential/Address": {
+      "title": "Address",
+      "description": "A Cardano `Address` typically holding one or two credential references.\n\n Note that legacy bootstrap addresses (a.k.a. 'Byron addresses') are\n completely excluded from Plutus contexts. Thus, from an on-chain\n perspective only exists addresses of type 00, 01, ..., 07 as detailed\n in [CIP-0019 :: Shelley Addresses](https://github.com/cardano-foundation/CIPs/tree/master/CIP-0019/#shelley-addresses).",
+      "anyOf": [
+        {
+          "title": "Address",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "payment_credential",
+              "$ref": "#/definitions/aiken~1transaction~1credential~1Credential"
+            },
+            {
+              "title": "stake_credential",
+              "$ref": "#/definitions/Option$aiken~1transaction~1credential~1Referenced$aiken~1transaction~1credential~1Credential"
+            }
+          ]
+        }
+      ]
+    },
+    "aiken/transaction/credential/Credential": {
+      "title": "Credential",
+      "description": "A general structure for representing an on-chain `Credential`.\n\n Credentials are always one of two kinds: a direct public/private key\n pair, or a script (native or Plutus).",
+      "anyOf": [
+        {
+          "title": "VerificationKeyCredential",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        },
+        {
+          "title": "ScriptCredential",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        }
+      ]
+    },
+    "aiken/transaction/credential/Referenced$aiken/transaction/credential/Credential": {
+      "title": "Referenced",
+      "description": "Represent a type of object that can be represented either inline (by hash)\n or via a reference (i.e. a pointer to an on-chain location).\n\n This is mainly use for capturing pointers to a stake credential\n registration certificate in the case of so-called pointer addresses.",
+      "anyOf": [
+        {
+          "title": "Inline",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/aiken~1transaction~1credential~1Credential"
+            }
+          ]
+        },
+        {
+          "title": "Pointer",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "title": "slot_number",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "transaction_index",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "certificate_index",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "aiken/transaction/value/Value": {
+      "title": "Value",
+      "description": "A multi-asset output `Value`. Contains tokens indexed by [PolicyId](#PolicyId) and [AssetName](#AssetName).\n\n This type maintain some invariants by construction; in particular, a `Value` will never contain a\n zero quantity of a particular token.",
+      "dataType": "map",
+      "keys": {
+        "$ref": "#/definitions/ByteArray"
+      },
+      "values": {
+        "$ref": "#/definitions/aiken~1dict~1Dict$ByteArray_Int"
+      }
+    },
+    "iagon/staking/staking_validator/StakeDatum": {
+      "title": "StakeDatum",
+      "anyOf": [
+        {
+          "title": "StakeDatum",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "provider_key",
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "title": "token",
+              "$ref": "#/definitions/Tuple$ByteArray_ByteArray"
+            },
+            {
+              "title": "locked_until",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "state",
+              "$ref": "#/definitions/iagon~1staking~1staking_validator~1StakingState"
+            },
+            {
+              "title": "cert",
+              "$ref": "#/definitions/Option$iagon~1staking~1staking_validator~1StakingCertificate"
+            }
+          ]
+        }
+      ]
+    },
+    "iagon/staking/staking_validator/StakingCertificate": {
+      "title": "StakingCertificate",
+      "anyOf": [
+        {
+          "title": "StakingCertificate",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "cert_utxo",
+              "$ref": "#/definitions/aiken~1transaction~1OutputReference"
+            },
+            {
+              "title": "expires_in",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "stk_utxo_lock_until",
+              "$ref": "#/definitions/Option$Int"
+            },
+            {
+              "title": "value",
+              "$ref": "#/definitions/aiken~1transaction~1value~1Value"
+            }
+          ]
+        }
+      ]
+    },
+    "iagon/staking/staking_validator/StakingRedeemer": {
+      "title": "StakingRedeemer",
+      "anyOf": [
+        {
+          "title": "Retire",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        },
+        {
+          "title": "Withdraw",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        },
+        {
+          "title": "Resize",
+          "dataType": "constructor",
+          "index": 2,
+          "fields": [
+            {
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        }
+      ]
+    },
+    "iagon/staking/staking_validator/StakingState": {
+      "title": "StakingState",
+      "anyOf": [
+        {
+          "title": "Active",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": []
+        },
+        {
+          "title": "Retiring",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    }
+  }
+}
