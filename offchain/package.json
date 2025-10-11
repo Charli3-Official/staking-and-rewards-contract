@@ -12,6 +12,6 @@
   "license": "ISC",
   "dependencies": {
     "cbor": "^9.0.1",
-    "lucid-cardano": "^0.10.7"
+    "lucid-cardano": "^0.10.11"
   }
 }
