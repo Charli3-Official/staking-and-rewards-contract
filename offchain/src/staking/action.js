@@ -6,8 +6,8 @@ import { tokenDatum, valueDatum, utxoDatum } from '../../data_helper';
 import { blockfrostProvider } from '../provider'
 import { fetchUtxoWithDatum } from '../utxo_helper';
 
-export async function sendStake({ value, provider_address, locked_until }, signer, validator) {
-    const lucid = await walletWithProvider(blockfrostProvider(), signer)
+export async function sendStake({ value, provider_address, locked_until }, validator) {
+    const lucid = await walletWithProvider(blockfrostProvider());
     const token = tokenDatum("", "");
     const validatorAddress = lucid.utils.validatorToAddress(validator);
     const providerPubKeyHash = lucid.utils.getAddressDetails(provider_address).paymentCredential.hash
@@ -43,8 +43,8 @@ export async function sendStake({ value, provider_address, locked_until }, signe
     return (await signedTx.submit());
 }
 
-export async function retireStake({ inUtxo, provider_addr }, signer, validator) {
-    const lucid = await walletWithProvider(blockfrostProvider(), signer)
+export async function retireStake({ inUtxo, provider_addr }, validator) {
+    const lucid = await walletWithProvider(blockfrostProvider())
     const providerPubKeyHash = lucid.utils.getAddressDetails(provider_addr).paymentCredential.hash
     const validatorAddress = lucid.utils.validatorToAddress(validator);
     const currentTime = new Date().getTime()
@@ -144,8 +144,8 @@ async function stakingDatumFromUtxo(utxo, lucid) {
     return { utxo, datum: datum }
 }
 
-export async function withdrawStake({ inUtxo, penalty_addr, provider_addr, penalty_amount }, signer, validator) {
-    const lucid = await walletWithProvider(blockfrostProvider(), signer)
+export async function withdrawStake({ inUtxo, penalty_addr, provider_addr, penalty_amount }, validator) {
+    const lucid = await walletWithProvider(blockfrostProvider())
     const providerPubKeyHash = lucid.utils.getAddressDetails(provider_addr).paymentCredential.hash
     const validatorAddress = lucid.utils.validatorToAddress(validator);
     const currentTime = new Date().getTime()
@@ -239,9 +239,9 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr, penal
     console.log("\n TX Submited with TxID: ", txId)
 }
 
-export async function resizeStake({ inUtxo, provider_addr }, signer, validator) {
+export async function resizeStake({ inUtxo, provider_addr }, validator) {
 
-    const lucid = await walletWithProvider(blockfrostProvider(), signer)
+    const lucid = await walletWithProvider(blockfrostProvider())
     const providerPubKeyHash = lucid.utils.getAddressDetails(provider_addr).paymentCredential.hash
     const validatorAddress = lucid.utils.validatorToAddress(validator);
     const currentTime = new Date().getTime()

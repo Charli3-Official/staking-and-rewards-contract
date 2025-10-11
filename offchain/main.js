@@ -1,5 +1,4 @@
 import { sendStake, retireStake, withdrawStake, resizeStake } from './src/staking/action';
-import { PROVIDER_1, PROVIDER_2, PROVIDER_3 } from './src/wallet';
 import { vkey_as_bytes, OPERATOR_KEYS } from './src/certificate';
 import { stakingValidator } from './src/staking/validator.js'
 import { addressDatum } from './data_helper'
@@ -7,17 +6,17 @@ import { checkStakingDatumCborWithoutCert, checkStakingCertCbor, checkStakingDat
 import { walletWithProvider } from './src/wallet'
 import { rewardValidator, placeReward, claimReward, reclaimReward } from './src/rewards/validator';
 
-
-const lucid = await walletWithProvider({}, OPERATOR_KEYS.sKey)
+const lucid = await walletWithProvider({});
 
 let operatorAddr = lucid.utils.getAddressDetails(OPERATOR_KEYS.address).paymentCredential.hash
 let stValidator = stakingValidator(vkey_as_bytes(), addressDatum(operatorAddr));
 
 /// 
-// owner = Provider 3
-// Node storage provider = Provider 1
-let ownerPubKeyHash = lucid.utils.getAddressDetails(PROVIDER_3.address).paymentCredential.hash
-let rwdValidator = rewardValidator(vkey_as_bytes(), ownerPubKeyHash);
+// owner = Provider
+// Node provider = Provider
+let providerAddress = await lucid.wallet.address();
+let providerPubKeyHash = lucid.utils.getAddressDetails(providerAddress).paymentCredential.hash
+let rwdValidator = rewardValidator(vkey_as_bytes(), providerPubKeyHash);
 
 
 const args = process.argv.slice(2);
@@ -76,26 +75,26 @@ async function doPlaceReward(_args) {
     // Placing 10 ADA to Reward Contract
     const rewardTxId = await placeReward({
         value: { lovelace: 10000000n },
-        owner_addr: PROVIDER_3.address
-    }, PROVIDER_3.signingKey, rwdValidator);
+        owner_addr: providerAddress
+    }, rwdValidator);
     console.log(`Placed reward with TX:  ${rewardTxId}`);
 }
 
 async function doClaimReward(_args) {
-    const txId = await claimReward({ provider_addr: PROVIDER_1.address }, PROVIDER_1.signingKey, rwdValidator)
+    const txId = await claimReward({ provider_addr: providerAddress }, rwdValidator)
     console.log(`Cliamed Reward with TX: ${txId}`);
 }
 
 async function doReclaimReward(_args) {
-    const txId = await reclaimReward({ owner_addr: PROVIDER_3.address }, PROVIDER_3.signingKey, rwdValidator);
+    const txId = await reclaimReward({ owner_addr: providerAddress }, rwdValidator);
     console.log(`Reclaim Reward with TX:  ${txId}`);
 }
 
 async function doResizeStake(_args) {
     let params = {
-        provider_addr: PROVIDER_1.address
+        provider_addr: providerAddress
     };
-    resizeStake(params, PROVIDER_1.signingKey, stValidator)
+    resizeStake(params, stValidator)
 }
 
 async function doTestCbor(_args) {
@@ -121,30 +120,30 @@ async function placeStake(args) {
     let locked_until = args[0] || new Date().getTime()
     let params = {
         value: { lovelace: 5000000n },
-        provider_address: PROVIDER_1.address,
+        provider_address: providerAddress,
         locked_until: BigInt(locked_until)
     };
 
-    const tx = await sendStake(params, PROVIDER_1.signingKey, stValidator);
+    const tx = await sendStake(params, stValidator);
     console.log("Submited TX: ", tx);
 }
 
 async function doStakeWithdraw(_args) {
     let params = {
-        provider_addr: PROVIDER_1.address,
+        provider_addr: providerAddress,
         penalty_addr: OPERATOR_KEYS.address,
         penalty_amount: BigInt(2000000)
     }
 
-    return await withdrawStake(params, PROVIDER_1.signingKey, stValidator)
+    return await withdrawStake(params, stValidator)
 }
 
 async function doRetireStake(args) {
     let utxo = args[0]
     let params = {
         utxo: utxo,
-        provider_addr: PROVIDER_1.address
+        provider_addr: providerAddress
     }
 
-    await retireStake(params, PROVIDER_1.signingKey, stValidator);
+    await retireStake(params, stValidator);
 }

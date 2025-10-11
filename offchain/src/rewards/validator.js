@@ -1,7 +1,7 @@
 import { Constr, Data, applyParamsToScript, toHex } from 'lucid-cardano';
 import { PLUTUS_BLUEPRINT } from '../../blueprint';
 import { blockfrostProvider } from '../provider';
-import { PROVIDER_1, walletWithProvider } from '../wallet';
+import { walletWithProvider } from '../wallet';
 import { getSignature } from '../certificate';
 import { mergeUtxoValue } from '../utxo_helper';
 import { utxoDatum, valueDatum } from '../../data_helper';
@@ -37,8 +37,8 @@ export const RewardReedemer = {
 }
 
 // Place reward to reward contract
-export async function placeReward({ value, owner_addr }, signer, validator) {
-    const lucid = await walletWithProvider(blockfrostProvider(), signer);
+export async function placeReward({ value, owner_addr }, validator) {
+    const lucid = await walletWithProvider(blockfrostProvider());
     const validatorAddr = lucid.utils.validatorToAddress(validator);
 
     console.log(`Fetching UTXO for address: ${owner_addr}`);
@@ -56,8 +56,8 @@ export async function placeReward({ value, owner_addr }, signer, validator) {
 }
 
 // Reward to claim by provider
-export async function claimReward({ provider_addr }, signer, validator) {
-    const lucid = await walletWithProvider(blockfrostProvider(), signer);
+export async function claimReward({ provider_addr }, validator) {
+    const lucid = await walletWithProvider(blockfrostProvider());
     const validatorAddr = await lucid.utils.validatorToAddress(validator);
 
     console.log(`Fetching UTXO for Provider address: ${provider_addr}`);
@@ -110,8 +110,8 @@ export async function claimReward({ provider_addr }, signer, validator) {
 }
 
 // Reclaim many utxo by owner
-export async function reclaimReward({ owner_addr }, signer, validator) {
-    const lucid = await walletWithProvider(blockfrostProvider(), signer);
+export async function reclaimReward({ owner_addr }, validator) {
+    const lucid = await walletWithProvider(blockfrostProvider());
     const validatorAddr = lucid.utils.validatorToAddress(validator);
     let ownerPubKeyHash = lucid.utils.getAddressDetails(owner_addr).paymentCredential.hash
 
