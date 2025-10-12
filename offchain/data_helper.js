@@ -15,7 +15,8 @@ export function valueDatum(asset, amount) {
     if (asset == "lovelace") {
         return [ADA_POLICY_ID, new Map([[ADA_ASSET_NAME, amt]])];
     }
-    const [policy_id, asset_name] = asset.split(".");
+    const policy_id = asset.slice(0, 56);
+    const asset_name = asset.slice(56);
     return [policy_id, new Map([[asset_name, amt]])]
 }
 

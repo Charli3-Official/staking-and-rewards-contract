@@ -5,6 +5,7 @@ import { addressDatum } from './data_helper'
 import { checkStakingDatumCborWithoutCert, checkStakingCertCbor, checkStakingDatumCborWithCert, checkStakingRedeemerCbor, checkRewardCertificateDatumCbor, checkRewardReedemerCbor } from './test'
 import { walletWithProvider } from './src/wallet'
 import { rewardValidator, placeReward, claimReward, reclaimReward } from './src/rewards/validator';
+import { CONFIG } from './src/config.js'
 
 const lucid = await walletWithProvider({});
 
@@ -117,9 +118,11 @@ async function doTestCbor(_args) {
 }
 
 async function placeStake(args) {
-    let locked_until = args[0] || new Date().getTime()
+    let amount = args[0];
+    let token = `${CONFIG.TOKEN_POLICY_ID}${CONFIG.TOKEN_ASSET_NAME}`
+    let locked_until = new Date().getTime()
     let params = {
-        value: { lovelace: 5000000n },
+        value: { [token]: BigInt(amount) },
         provider_address: providerAddress,
         locked_until: BigInt(locked_until)
     };

@@ -5,10 +5,11 @@ import { getSignature } from '../certificate';
 import { tokenDatum, valueDatum, utxoDatum } from '../../data_helper';
 import { blockfrostProvider } from '../provider'
 import { fetchUtxoWithDatum } from '../utxo_helper';
+import { CONFIG } from '../config';
 
 export async function sendStake({ value, provider_address, locked_until }, validator) {
     const lucid = await walletWithProvider(blockfrostProvider());
-    const token = tokenDatum("", "");
+    const token = tokenDatum(CONFIG.TOKEN_POLICY_ID, CONFIG.TOKEN_ASSET_NAME);
     const validatorAddress = lucid.utils.validatorToAddress(validator);
     const providerPubKeyHash = lucid.utils.getAddressDetails(provider_address).paymentCredential.hash
 
@@ -48,6 +49,7 @@ export async function retireStake({ inUtxo, provider_addr }, validator) {
     const providerPubKeyHash = lucid.utils.getAddressDetails(provider_addr).paymentCredential.hash
     const validatorAddress = lucid.utils.validatorToAddress(validator);
     const currentTime = new Date().getTime()
+    const token = `${CONFIG.TOKEN_POLICY_ID}${CONFIG.TOKEN_ASSET_NAME}`
 
     console.log("Fetching UTXO At Staking Contract: ", validatorAddress);
     const utxoWithDatum = (await fetchUtxoWithDatum(lucid, { in_utxos: inUtxo, address: validatorAddress }, StakeDatum)).filter(({ datum }) => {
@@ -73,17 +75,17 @@ export async function retireStake({ inUtxo, provider_addr }, validator) {
 
     const timeToLockForWithdraw = new Date(currentTime + 3 * 60 * 1000).getTime()
     const certificateExpiry = new Date(currentTime + 10 * 60 * 1000).getTime()
-    // 
+
     const certDtm = {
         cert_utxo: utxoDatum(providerUtxo.txHash, providerUtxo.outputIndex),
         expires_in: BigInt(certificateExpiry),
         stk_utxo_lock_until: BigInt(timeToLockForWithdraw), // Can withdraw after 10 min
-        value: new Map([valueDatum("lovelace", utxo.assets.lovelace)])
+        value: new Map([valueDatum(token, utxo.assets[token])])
     }
 
     const newJsonDtm = {
         provider_key: datum.provider_key,
-        token: tokenDatum("", ""),
+        token: tokenDatum(CONFIG.TOKEN_POLICY_ID, CONFIG.TOKEN_ASSET_NAME),
         locked_until: BigInt(timeToLockForWithdraw),
         state: StakingState.retiring,
         cert: certDtm
@@ -149,6 +151,7 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr, penal
     const providerPubKeyHash = lucid.utils.getAddressDetails(provider_addr).paymentCredential.hash
     const validatorAddress = lucid.utils.validatorToAddress(validator);
     const currentTime = new Date().getTime()
+    const token = `${CONFIG.TOKEN_POLICY_ID}${CONFIG.TOKEN_ASSET_NAME}`
 
     console.log("Fetching UTXO At Staking Contract: ", validatorAddress);
     const utxoWithDatum = await (inUtxo ?
@@ -177,18 +180,17 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr, penal
 
     const timeToLockForWithdraw = new Date(currentTime + 3 * 60 * 1000).getTime()
     const certificateExpiry = new Date(currentTime + 10 * 60 * 1000).getTime()
-    const value_amount = (utxo.assets.lovelace - penalty_amount)
-    // 
+    //
     const certDtm = {
         cert_utxo: utxoDatum(providerUtxo.txHash, providerUtxo.outputIndex),
         expires_in: BigInt(certificateExpiry),
         stk_utxo_lock_until: null,
-        value: new Map([valueDatum("lovelace", value_amount)])
+        value: new Map([valueDatum(token, utxo.assets[token])])
     }
 
     const newJsonDtm = {
         provider_key: datum.provider_key,
-        token: tokenDatum("", ""),
+        token: tokenDatum(CONFIG.TOKEN_POLICY_ID, CONFIG.TOKEN_ASSET_NAME),
         locked_until: BigInt(timeToLockForWithdraw),
         state: StakingState.retiring,
         cert: certDtm
@@ -222,7 +224,7 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr, penal
             .collectFrom([providerUtxo])
             .collectFrom([utxo], Data.to(redeemer))
             .addSignerKey(datum.provider_key)
-            .payToAddressWithData(penalty_addr, sedDatum, { "lovelace": penalty_amount })
+            .payToAddressWithData(penalty_addr, sedDatum, { lovelace: penalty_amount })
             .attachSpendingValidator(validator)
             .validFrom(currentTime - 2 * 60 * 1000)
             .validTo(certificateExpiry)
@@ -245,6 +247,7 @@ export async function resizeStake({ inUtxo, provider_addr }, validator) {
     const providerPubKeyHash = lucid.utils.getAddressDetails(provider_addr).paymentCredential.hash
     const validatorAddress = lucid.utils.validatorToAddress(validator);
     const currentTime = new Date().getTime()
+    const token = `${CONFIG.TOKEN_POLICY_ID}${CONFIG.TOKEN_ASSET_NAME}`
 
     console.log("Fetching UTXO At Staking Contract: ", validatorAddress);
     const utxoWithDatum = await (inUtxo ?
@@ -279,12 +282,12 @@ export async function resizeStake({ inUtxo, provider_addr }, validator) {
         cert_utxo: utxoDatum(providerUtxo.txHash, providerUtxo.outputIndex),
         expires_in: BigInt(certificateExpiry),
         stk_utxo_lock_until: BigInt(timeToLockForWithdraw), // Can withdraw after 10 min
-        value: new Map([valueDatum("lovelace", newValue)])
+        value: new Map([valueDatum(token, utxo.assets[token])])
     }
 
     const newJsonDtm = {
         provider_key: datum.provider_key,
-        token: tokenDatum("", ""),
+        token: tokenDatum(CONFIG.TOKEN_POLICY_ID, CONFIG.TOKEN_ASSET_NAME),
         locked_until: BigInt(timeToLockForWithdraw),
         state: StakingState.active,
         cert: certDtm
@@ -319,7 +322,7 @@ export async function resizeStake({ inUtxo, provider_addr }, validator) {
             .collectFrom([utxo], Data.to(redeemer))
             .addSignerKey(datum.provider_key)
             .attachSpendingValidator(validator)
-            .payToContract(validatorAddress, parsedDatum, { lovelace: newValue })
+            .payToContract(validatorAddress, parsedDatum, { lovelace: newValue, [token]: utxo.assets[token] })
             .validFrom(currentTime - 2 * 60 * 1000)
             .validTo(certificateExpiry)
             .complete()
