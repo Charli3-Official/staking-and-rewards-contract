@@ -2,7 +2,6 @@ import { Constr, Data, applyParamsToScript, toHex } from 'lucid-cardano';
 import { PLUTUS_BLUEPRINT } from '../../blueprint';
 import { blockfrostProvider } from '../provider';
 import { walletWithProvider } from '../wallet';
-import { getSignature } from '../certificate';
 import { mergeUtxoValue } from '../utxo_helper';
 import { utxoDatum, valueDatum } from '../../data_helper';
 
@@ -88,7 +87,7 @@ export async function claimReward({ provider_addr }, validator) {
 
     const parsedDatum = Data.to(datum, RewardCertificate);
     const dtmHash = lucid.utils.datumToHash(parsedDatum);
-    const certSig = getSignature(dtmHash);
+    certSig = null;
     const redeemer = RewardReedemer.Signed(dtmHash, certSig);
 
     console.log("Building TX ...")
