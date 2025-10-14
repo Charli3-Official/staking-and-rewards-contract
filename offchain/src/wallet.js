@@ -1,4 +1,5 @@
-import { Blockfrost, Lucid, Emulator } from 'lucid-cardano';
+import { Lucid, Emulator } from 'lucid-cardano';
+import { mkBlockfrost } from './provider.js';
 import 'dotenv/config';
 
 const mnemonic = process.env.PROVIDER_MNEMONIC;
@@ -12,10 +13,6 @@ if (!network) {
 	throw new Error('CARDANO_NETWORK not set in .env');
 }
 
-function mkBlockfrost(network, api_key) {
-	const url = `https://cardano-${network}.blockfrost.io/api/v0`.toLowerCase()
-	return new Blockfrost(url, api_key);
-}
 
 export async function walletWithProvider(provider) {
 	switch (provider.name) {

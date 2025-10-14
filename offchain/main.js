@@ -1,23 +1,21 @@
 import { sendStake, retireStake, withdrawStake, resizeStake } from './src/staking/action';
-import { vkey_as_bytes, OPERATOR_KEYS } from './src/certificate';
-import { stakingValidator } from './src/staking/validator.js'
-import { addressDatum } from './data_helper'
-import { checkStakingDatumCborWithoutCert, checkStakingCertCbor, checkStakingDatumCborWithCert, checkStakingRedeemerCbor, checkRewardCertificateDatumCbor, checkRewardReedemerCbor } from './test'
+import { createReferenceScript } from './src/staking/referenceScript.js'
+import { checkStakingDatumCborWithoutCert, checkStakingCertCbor, checkStakingDatumCborWithCert, checkStakingRedeemerCbor } from './test'
 import { walletWithProvider } from './src/wallet'
-import { rewardValidator, placeReward, claimReward, reclaimReward } from './src/rewards/validator';
+
 import { CONFIG } from './src/config.js'
 
 const lucid = await walletWithProvider({});
 
-let operatorAddr = lucid.utils.getAddressDetails(OPERATOR_KEYS.address).paymentCredential.hash
-let stValidator = stakingValidator(vkey_as_bytes(), addressDatum(operatorAddr));
+let operatorAddress = CONFIG.OPERATOR_ADDRESS;
+if (!operatorAddress) {
+    throw new Error('OPERATOR_ADDRESS must be set in .env file');
+}
 
 /// 
 // owner = Provider
 // Node provider = Provider
 let providerAddress = await lucid.wallet.address();
-let providerPubKeyHash = lucid.utils.getAddressDetails(providerAddress).paymentCredential.hash
-let rwdValidator = rewardValidator(vkey_as_bytes(), providerPubKeyHash);
 
 
 const args = process.argv.slice(2);
@@ -48,16 +46,8 @@ switch (args[0].toLowerCase()) {
         doResizeStake(args.splice(1));
         break;
 
-    case "place-reward":
-        doPlaceReward();
-        break;
-
-    case "claim-reward":
-        doClaimReward();
-        break;
-
-    case "reclaim-reward":
-        doReclaimReward();
+    case "create-ref-script":
+        await doCreateRefScript(args.slice(1));
         break;
 
     case "help":
@@ -72,30 +62,18 @@ switch (args[0].toLowerCase()) {
         console.log("Invalid Action: ", args[0]);
 }
 
-async function doPlaceReward(_args) {
-    // Placing 10 ADA to Reward Contract
-    const rewardTxId = await placeReward({
-        value: { lovelace: 10000000n },
-        owner_addr: providerAddress
-    }, rwdValidator);
-    console.log(`Placed reward with TX:  ${rewardTxId}`);
-}
+async function doResizeStake(args) {
+    let amount = args[0];
+    if (!amount) {
+        console.log("Error: Please provide amount to add. Usage: npm start resize-staking <amount>");
+        return;
+    }
 
-async function doClaimReward(_args) {
-    const txId = await claimReward({ provider_addr: providerAddress }, rwdValidator)
-    console.log(`Cliamed Reward with TX: ${txId}`);
-}
-
-async function doReclaimReward(_args) {
-    const txId = await reclaimReward({ owner_addr: providerAddress }, rwdValidator);
-    console.log(`Reclaim Reward with TX:  ${txId}`);
-}
-
-async function doResizeStake(_args) {
     let params = {
-        provider_addr: providerAddress
+        provider_addr: providerAddress,
+        additional_value: BigInt(amount)
     };
-    resizeStake(params, stValidator)
+    resizeStake(params)
 }
 
 async function doTestCbor(_args) {
@@ -108,13 +86,6 @@ async function doTestCbor(_args) {
     console.log(stakingDatumWithCertCheck)
     const stakingRedeemerDatumCheck = checkStakingRedeemerCbor()
     console.log(stakingRedeemerDatumCheck)
-
-    console.log("\nReward Cbor Test")
-
-    const rwdCertDtmCborCheck = await checkRewardCertificateDatumCbor()
-    console.log(rwdCertDtmCborCheck)
-    const rwdRedeemerCborCheck = checkRewardReedemerCbor()
-    console.log(rwdRedeemerCborCheck)
 }
 
 async function placeStake(args) {
@@ -127,26 +98,31 @@ async function placeStake(args) {
         locked_until: BigInt(locked_until)
     };
 
-    const tx = await sendStake(params, stValidator);
+    const tx = await sendStake(params);
     console.log("Submited TX: ", tx);
 }
 
 async function doStakeWithdraw(_args) {
     let params = {
         provider_addr: providerAddress,
-        penalty_addr: OPERATOR_KEYS.address,
-        penalty_amount: BigInt(2000000)
+        penalty_addr: operatorAddress
     }
-
-    return await withdrawStake(params, stValidator)
+    return await withdrawStake(params)
 }
 
 async function doRetireStake(args) {
     let utxo = args[0]
     let params = {
-        utxo: utxo,
+        inUtxo: utxo,
         provider_addr: providerAddress
     }
+    await retireStake(params);
+}
 
-    await retireStake(params, stValidator);
+async function doCreateRefScript(_args) {
+    try {
+        await createReferenceScript();
+    } catch (error) {
+        console.error('Failed to create reference script:', error.message);
+    }
 }

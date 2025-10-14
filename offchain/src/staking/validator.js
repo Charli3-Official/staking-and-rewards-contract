@@ -1,11 +1,12 @@
-import { Constr, fromHex, toHex, Data, applyParamsToScript, fromText } from "lucid-cardano";
+import { Constr, toHex, Data, applyParamsToScript } from "lucid-cardano";
 import { PLUTUS_BLUEPRINT } from '../../blueprint';
+import { addressDatum } from '../../data_helper';
 
 export function stakingValidator(operator_vkey, addr) {
   const validator = PLUTUS_BLUEPRINT.validators.find(({ title }) => title == "staking.stake")
   return {
     type: "PlutusV2",
-    script: applyParamsToScript(validator.compiledCode, [toHex(operator_vkey), addr]),
+    script: applyParamsToScript(validator.compiledCode, [toHex(operator_vkey), addressDatum(addr)]),
   };
 }
 

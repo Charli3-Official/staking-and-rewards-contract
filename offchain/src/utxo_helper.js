@@ -32,3 +32,31 @@ export function mergeUtxoValue(utxoLeft, utxoRight) {
 
     return Object.fromEntries(mergedValue);
 }
+
+
+export async function findReferenceScriptUtxo(lucid, scriptAddress) {
+    try {
+        console.log(`Searching for reference script UTXO at address: ${scriptAddress}`);
+
+        const utxos = await lucid.utxosAt(scriptAddress);
+
+        const refScriptUtxos = utxos.filter(utxo => {
+            return utxo.scriptRef !== undefined && utxo.scriptRef !== null;
+        });
+
+        console.log(`Found ${refScriptUtxos.length} reference script UTXOs`);
+
+        if (refScriptUtxos.length === 0) {
+            console.log('No reference script UTXOs found');
+            return null;
+        }
+
+        const refScriptUtxo = refScriptUtxos[0];
+        console.log(`Found Reference script UTXO: ${refScriptUtxo.txHash}#${refScriptUtxo.outputIndex}`);
+
+        return refScriptUtxo;
+    } catch (error) {
+        console.error('Error finding reference script UTXO:', error);
+        throw error;
+    }
+}
