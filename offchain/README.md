@@ -1,49 +1,77 @@
 # Off chain Code for IAGON Contract
 
-## Setup blockfrost 
-`export BLOCKFROST_API_KEY=<blockfrost api key>`
 
-## Setup Provider wallet
-By default we have used provider wallet hardcoded. We can allow setting up own provider key in future with Env Variable 
+## Setup
+
+### 1. Environment Configuration
+
+Example environment file and configure your settings:
+```bash
+# Blockfrost Configuration
+BLOCKFROST_API_KEY=<your_blockfrost_api_key>
+CARDANO_NETWORK=Preprod
+
+# Provider Wallet
+PROVIDER_MNEMONIC=<your_24_word_mnemonic>
+
+# Token Configuration
+TOKEN_POLICY_ID=<token_policy_id>
+TOKEN_ASSET_NAME=<token_asset_name>
+
+# Certificate Issuer API
+CERTIFICATE_ISSUER_API_URL=<certificate_issuer_api_url>
+
+# Contract Addresses
+STAKING_CONTRACT_ADDRESS=<staking_contract_address>
+OPERATOR_ADDRESS=<operator_address>
+
+# Optional: Operator Keys (only needed for reference script creation)
+OPERATOR_VKEY=<operator_verification_key>
+OPERATOR_SKEY=<operator_signing_key>
+```
 
 ## Usage
 
-### Placing Staking
-`npm start place-staking `
+### Create Reference Script (Required First Time)
+Before using staking operations, create a reference script UTXO:
+```bash
+npm start create-ref-script
+```
+This must be done once by an operator before providers can use staking transactions.
+Requires `OPERATOR_VKEY` and `OPERATOR_SKEY` in .env.
 
-this will place staking using one of provider keys
+
+### Placing Staking
+```bash
+npm start place-staking <amount>
+```
+
+This will place staking using your provider wallet
 
 ### Retire Staking
-`npm start retire-staking`
+```bash
+npm start retire-staking
+```
 
-This will request Stating to retire
+This will request Staking to retire
 
 ### Resize Staking
-`npm start resize-staking `
+```bash
+npm start resize-staking <additional_amount>
+```
 
-Will Resize previous staking by adding 1 more ADA
+Will Resize previous stake by adding the specified amount to the existing active stake.
 
 ### Withdraw Staking
-`npm start withdraw-staking`
-
-Will withdraw staking from contract sending 2 ADA as penalty to penalty Address
-
-
-
-### Place Reward
-`npm start place-reward`
-place 10 ADA as reward To reward contract. 
-
-### Claim Reward
-`npm start claim-reward`
-Claims 2 ADA from Reward contract 
-
-### ReClaim Reward
-`npm start reclaim-reward`
-Merge multiple UTXO in reward contract into single UTXO
+```bash
+npm start withdraw-staking
+```
+Will withdraw staking from the contract
 
 
 ### Testing CBOR
-`npm start test-staking-cbor`
+```bash
+npm start test-staking-cbor
+```
 
-Will check if cbor is correct for datum, certificate & Reedemer
+Will check if cbor is correct for datum, certificate & Redeemer

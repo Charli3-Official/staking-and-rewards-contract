@@ -54,7 +54,7 @@ switch (args[0].toLowerCase()) {
         console.log("here will be help text");
         break;
 
-    case "test-cbor":
+    case "test-staking-cbor":
         doTestCbor(args.splice(1));
         break;
 
