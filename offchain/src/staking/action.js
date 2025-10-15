@@ -44,7 +44,7 @@ export async function retireStake({ inUtxo, provider_addr }) {
     const lucid = await walletWithProvider(blockfrostProvider());
     const providerPubKeyHash = lucid.utils.getAddressDetails(provider_addr).paymentCredential.hash;
     const validatorAddress = CONFIG.STAKING_CONTRACT_ADDRESS;
-    const currentTime = new Date().getTime();
+    const currentTime = lucid.utils.slotToUnixTime(lucid.currentSlot());
 
     console.log(`\n=== RETIRE STAKE ===`);
     console.log(`Provider Address: ${provider_addr}`);
@@ -110,9 +110,9 @@ export async function retireStake({ inUtxo, provider_addr }) {
     console.log(`Valid From: ${new Date(validFromTime).toISOString()}`);
 
     const tx = await lucid.newTx()
-        .collectFrom([providerUtxo])
         .readFrom([refScriptUtxo])
         .collectFrom([stakingUtxo], Data.to(redeemer))
+        .collectFrom([providerUtxo])
         .addSignerKey(stakingDatum.provider_key)
         .payToContract(validatorAddress, parsedOutputDatum, stakingUtxo.assets)
         .validFrom(validFromTime)
@@ -126,44 +126,45 @@ export async function retireStake({ inUtxo, provider_addr }) {
     return txHash;
 }
 
-
 export async function withdrawStake({ inUtxo, penalty_addr, provider_addr }) {
     const lucid = await walletWithProvider(blockfrostProvider());
     const providerPubKeyHash = lucid.utils.getAddressDetails(provider_addr).paymentCredential.hash;
     const validatorAddress = CONFIG.STAKING_CONTRACT_ADDRESS;
-    const currentTime = new Date().getTime();
+    const currentTime = lucid.utils.slotToUnixTime(lucid.currentSlot());
 
     console.log(`\n=== WITHDRAW STAKE ===`);
     console.log(`Provider Address: ${provider_addr}`);
     console.log(`Penalty Address: ${penalty_addr}`);
 
-    // Find retiring staking UTXO
-    const stakingUtxoWithDatum = await (inUtxo ?
-        parseStakingUtxo(inUtxo, lucid) :
-        findRetiringStakingUtxo(validatorAddress, lucid, providerPubKeyHash, currentTime));
+    const stakingUtxoWithDatum = await (inUtxo
+        ? parseStakingUtxo(inUtxo, lucid)
+        : findRetiringStakingUtxo(validatorAddress, lucid, providerPubKeyHash, currentTime));
 
     if (!stakingUtxoWithDatum) {
-        console.error('\nNo eligible staking UTXO found for withdrawal.');
-        console.error('Please ensure:');
-        console.error('  - The UTXO exists at the staking contract address');
-        console.error('  - The UTXO belongs to your provider address');
-        console.error('  - The UTXO is in Retiring state');
-        console.error('  - The cooldown period has expired\n');
+        console.error('No eligible staking UTXO found for withdrawal.');
         return null;
     }
 
     const { utxo: stakingUtxo, datum: stakingDatum } = stakingUtxoWithDatum;
     console.log(`Staking UTXO: ${stakingUtxo.txHash}#${stakingUtxo.outputIndex}`);
 
-    // Get provider UTXO for certificate reference
+    const [datumPolicyId, datumAssetName] = stakingDatum.token;
+    const isAda = datumPolicyId === '' && datumAssetName === '';
+    const tokenId = isAda ? 'lovelace' : `${datumPolicyId}${datumAssetName}`;
+
+    const currentStakeAmount = BigInt(stakingUtxo.assets?.[tokenId] ?? 0n);
+    const totalLovelace = stakingUtxo.assets.lovelace;
+
+    console.log(`Current Stake Amount: ${currentStakeAmount}`);
+    console.log(`Total Lovelace: ${totalLovelace}`);
+
     const providerUtxos = await lucid.utxosAt(provider_addr);
     if (!providerUtxos.length) {
-        console.error(`\nNo UTXOs found at provider address: ${provider_addr}\n`);
+        console.error(`No UTXOs found at provider address: ${provider_addr}`);
         return null;
     }
     const providerUtxo = providerUtxos[0];
     console.log(`Provider UTXO: ${providerUtxo.txHash}#${providerUtxo.outputIndex}`);
-
 
     const certificate = await requestCertificateFromIssuer(
         'withdraw',
@@ -174,39 +175,37 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr }) {
         lucid,
         currentTime
     );
-
     const certificateDatum = Data.from(certificate.certData, Certificate);
 
     const outputDatum = {
         provider_key: stakingDatum.provider_key,
-        token: tokenDatum(CONFIG.TOKEN_POLICY_ID, CONFIG.TOKEN_ASSET_NAME),
-        locked_until: certificateDatum.stk_utxo_lock_until,
+        token: stakingDatum.token,
+        locked_until: stakingDatum.locked_until,
         state: StakingState.retiring,
         cert: certificateDatum
     };
-
     const parsedOutputDatum = Data.to(outputDatum, StakeDatum);
     const outputDatumHash = lucid.utils.datumToHash(parsedOutputDatum);
     console.log(`Output Datum Hash: ${outputDatumHash}`);
 
     const redeemer = Reedemer.withdraw(outputDatumHash, certificate.signature);
-
     const refScriptUtxo = await findReferenceScriptUtxo(lucid, validatorAddress);
+
     const certificateExpiry = Number(certificate.expiresAt);
     const validFromTime = currentTime - 2 * 60 * 1000;
-
     console.log(`Certificate Expiry: ${new Date(certificateExpiry).toISOString()}`);
     console.log(`Valid From: ${new Date(validFromTime).toISOString()}`);
 
-    const tx = await lucid.newTx()
+
+    let tx = await lucid.newTx()
+        .collectFrom([stakingUtxo], Data.to(redeemer))
         .collectFrom([providerUtxo])
         .readFrom([refScriptUtxo])
-        .collectFrom([stakingUtxo], Data.to(redeemer))
         .addSignerKey(stakingDatum.provider_key)
-        .payToAddressWithData(penalty_addr, parsedOutputDatum, {lovelace: 1000000n}) 
+        .payToAddressWithData(provider_addr, parsedOutputDatum, { "lovelace": 0n })
         .validFrom(validFromTime)
         .validTo(certificateExpiry)
-        .complete();
+        .complete()
 
     const signedTx = await tx.sign().complete();
     const txHash = await signedTx.submit();
@@ -215,12 +214,11 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr }) {
     return txHash;
 }
 
-
 export async function resizeStake({ inUtxo, provider_addr, additional_value }) {
     const lucid = await walletWithProvider(blockfrostProvider());
     const providerPubKeyHash = lucid.utils.getAddressDetails(provider_addr).paymentCredential.hash;
     const validatorAddress = CONFIG.STAKING_CONTRACT_ADDRESS;
-    const currentTime = new Date().getTime();
+    const currentTime = lucid.utils.slotToUnixTime(lucid.currentSlot());
     const tokenId = `${CONFIG.TOKEN_POLICY_ID}${CONFIG.TOKEN_ASSET_NAME}`;
 
     console.log(`\n=== RESIZE STAKE ===`);
@@ -271,7 +269,7 @@ export async function resizeStake({ inUtxo, provider_addr, additional_value }) {
 
     const outputDatum = {
         provider_key: stakingDatum.provider_key,
-        token: tokenDatum(CONFIG.TOKEN_POLICY_ID, CONFIG.TOKEN_ASSET_NAME),
+        token: stakingDatum.token,
         locked_until: certificateDatum.stk_utxo_lock_until,
         state: stakingDatum.state,
         cert: certificateDatum
@@ -308,7 +306,6 @@ export async function resizeStake({ inUtxo, provider_addr, additional_value }) {
     console.log(`Transaction Submitted: ${txHash}\n`);
     return txHash;
 }
-
 
 async function parseStakingUtxo(utxo, lucid) {
     try {
@@ -393,7 +390,7 @@ async function requestCertificateFromIssuer(
         timestamp
     );
 
-    const messageHex = toHex(signaturePayload);
+    const messageHex = toHex(new TextEncoder().encode(signaturePayload));
     const signature = await lucid.wallet.signMessage(signerAddress, messageHex);
 
     console.log(`Requesting ${operationType} certificate from issuer...`);
