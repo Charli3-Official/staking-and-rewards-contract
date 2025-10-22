@@ -7,10 +7,7 @@ import { CONFIG } from './src/config.js'
 
 const lucid = await walletWithProvider({});
 
-let operatorAddress = CONFIG.OPERATOR_ADDRESS;
-if (!operatorAddress) {
-    throw new Error('OPERATOR_ADDRESS must be set in .env file');
-}
+let penaltyAddress = CONFIG.PENALTY_ADDRESS;
 
 /// 
 // owner = Provider
@@ -21,33 +18,71 @@ let providerAddress = await lucid.wallet.address();
 const args = process.argv.slice(2);
 if (!args[0]) {
     console.log("Missing Commands");
+    console.log("Available commands: place-staking, retire-staking, withdraw-staking, resize-staking, create-ref-script, test-staking-cbor, help");
+    process.exit(1);
 }
 
 console.log("........................................................")
 console.log("IAGON STAKING CLI ")
 console.log(".........................................................")
 
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error.message);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+});
+
 switch (args[0].toLowerCase()) {
     case "place-staking":
         // handle place
-        placeStake(args.splice(1));
+        try {
+            await placeStake(args.splice(1));
+        } catch (error) {
+            console.error("Error placing stake:", error.message);
+            process.exit(1);
+        }
         break;
 
     case "retire-staking":
         // Handle retire
-        doRetireStake(args.splice(1));
+        try {
+            await doRetireStake(args.splice(1));
+        } catch (error) {
+            console.error("Error retiring stake:", error.message);
+            process.exit(1);
+        }
         break;
 
     case "withdraw-staking":
-        doStakeWithdraw(args.splice(1));
+        try {
+            await doStakeWithdraw(args.splice(1));
+        } catch (error) {
+            console.error("Error withdrawing stake:", error.message);
+            process.exit(1);
+        }
         break;
 
     case "resize-staking":
-        doResizeStake(args.splice(1));
+        try {
+            await doResizeStake(args.splice(1));
+        } catch (error) {
+            console.error("Error resizing stake:", error.message);
+            process.exit(1);
+        }
         break;
 
     case "create-ref-script":
-        await doCreateRefScript(args.slice(1));
+        try {
+            await doCreateRefScript(args.slice(1));
+        } catch (error) {
+            console.error("Error creating reference script:", error.message);
+            process.exit(1);
+        }
         break;
 
     case "help":
@@ -55,11 +90,18 @@ switch (args[0].toLowerCase()) {
         break;
 
     case "test-staking-cbor":
-        doTestCbor(args.splice(1));
+        try {
+            await doTestCbor(args.splice(1));
+        } catch (error) {
+            console.error("Error testing CBOR:", error.message);
+            process.exit(1);
+        }
         break;
 
     default:
         console.log("Invalid Action: ", args[0]);
+        console.log("Available commands: place-staking, retire-staking, withdraw-staking, resize-staking, create-ref-script, test-staking-cbor, help");
+        process.exit(1);
 }
 
 async function doResizeStake(args) {
@@ -73,7 +115,7 @@ async function doResizeStake(args) {
         provider_addr: providerAddress,
         additional_value: BigInt(amount)
     };
-    resizeStake(params)
+    await resizeStake(params);
 }
 
 async function doTestCbor(_args) {
@@ -105,7 +147,7 @@ async function placeStake(args) {
 async function doStakeWithdraw(_args) {
     let params = {
         provider_addr: providerAddress,
-        penalty_addr: operatorAddress
+        penalty_addr: penaltyAddress
     }
     return await withdrawStake(params)
 }

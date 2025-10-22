@@ -5,6 +5,7 @@ import { requestCertificate, createSignaturePayload } from '../certificate';
 import { tokenDatum } from '../../data_helper';
 import { blockfrostProvider } from '../provider'
 import { findReferenceScriptUtxo } from '../utxo_helper';
+
 import { CONFIG } from '../config';
 
 
@@ -150,13 +151,10 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr }) {
 
     const [datumPolicyId, datumAssetName] = stakingDatum.token;
     const isAda = datumPolicyId === '' && datumAssetName === '';
-    const tokenId = isAda ? 'lovelace' : `${datumPolicyId}${datumAssetName}`;
+    const tokenUnit = isAda ? 'lovelace' : datumPolicyId + datumAssetName;
 
-    const currentStakeAmount = BigInt(stakingUtxo.assets?.[tokenId] ?? 0n);
-    const totalLovelace = stakingUtxo.assets.lovelace;
-
+    const currentStakeAmount = BigInt(stakingUtxo.assets?.[tokenUnit] ?? 0n);
     console.log(`Current Stake Amount: ${currentStakeAmount}`);
-    console.log(`Total Lovelace: ${totalLovelace}`);
 
     const providerUtxos = await lucid.utxosAt(provider_addr);
     if (!providerUtxos.length) {
@@ -175,7 +173,16 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr }) {
         lucid,
         currentTime
     );
+
     const certificateDatum = Data.from(certificate.certData, Certificate);
+
+    const certValue = certificateDatum.value;
+    const certAssets = valueMapToAssets(certValue);
+    const amountApproved = certAssets[tokenUnit] ?? 0n;
+    const penaltyFee = currentStakeAmount - amountApproved;
+
+    console.log(`Certificate Approved: ${amountApproved}`);
+    console.log(`Penalty Fee: ${penaltyFee}`);
 
     const outputDatum = {
         provider_key: stakingDatum.provider_key,
@@ -184,35 +191,52 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr }) {
         state: StakingState.retiring,
         cert: certificateDatum
     };
+
     const parsedOutputDatum = Data.to(outputDatum, StakeDatum);
     const outputDatumHash = lucid.utils.datumToHash(parsedOutputDatum);
     console.log(`Output Datum Hash: ${outputDatumHash}`);
 
     const redeemer = Reedemer.withdraw(outputDatumHash, certificate.signature);
-    const refScriptUtxo = await findReferenceScriptUtxo(lucid, validatorAddress);
 
+    const refScriptUtxo = await findReferenceScriptUtxo(lucid, validatorAddress);
     const certificateExpiry = Number(certificate.expiresAt);
     const validFromTime = currentTime - 2 * 60 * 1000;
+
     console.log(`Certificate Expiry: ${new Date(certificateExpiry).toISOString()}`);
     console.log(`Valid From: ${new Date(validFromTime).toISOString()}`);
 
-
-    let tx = await lucid.newTx()
-        .collectFrom([stakingUtxo], Data.to(redeemer))
+    let tx = lucid.newTx()
         .collectFrom([providerUtxo])
         .readFrom([refScriptUtxo])
+        .collectFrom([stakingUtxo], Data.to(redeemer))
         .addSignerKey(stakingDatum.provider_key)
-        .payToAddressWithData(provider_addr, parsedOutputDatum, { "lovelace": 0n })
         .validFrom(validFromTime)
-        .validTo(certificateExpiry)
-        .complete()
+        .validTo(certificateExpiry);
 
-    const signedTx = await tx.sign().complete();
+    const contractAssets = { lovelace: stakingUtxo.assets.lovelace };
+
+    if (penaltyFee > 0n) {
+        const penaltyAssets = { [tokenUnit]: penaltyFee };
+        if (!isAda) {
+            penaltyAssets.lovelace = 2000000n;
+        }
+        tx = tx.payToAddress(penalty_addr, penaltyAssets);
+    }
+
+    tx = tx.payToContract(
+        validatorAddress,
+        { asHash: parsedOutputDatum },
+        contractAssets
+    );
+
+    const txComplete = await tx.complete();
+    const signedTx = await txComplete.sign().complete();
     const txHash = await signedTx.submit();
 
     console.log(`Transaction Submitted: ${txHash}\n`);
     return txHash;
 }
+
 
 export async function resizeStake({ inUtxo, provider_addr, additional_value }) {
     const lucid = await walletWithProvider(blockfrostProvider());
@@ -351,10 +375,14 @@ async function findActiveStakingUtxo(validatorAddress, lucid, providerPubKeyHash
 }
 
 async function findRetiringStakingUtxo(validatorAddress, lucid, providerPubKeyHash, currentTime) {
-    return findStakingUtxo(validatorAddress, lucid, ({ datum }) => {
+    return findStakingUtxo(validatorAddress, lucid, ({ utxo, datum }) => {
+        const [policyId, assetName] = datum.token;
+        const tokenUnit = policyId === '' && assetName === '' ? 'lovelace' : policyId + assetName;
+        const hasTokens = utxo.assets[tokenUnit] && BigInt(utxo.assets[tokenUnit]) > 0n;
         return datum.provider_key === providerPubKeyHash &&
             datum.locked_until <= BigInt(currentTime) &&
-            JSON.stringify(datum.state) === JSON.stringify(StakingState.retiring);
+            JSON.stringify(datum.state) === JSON.stringify(StakingState.retiring) &&
+            hasTokens;
     });
 }
 
@@ -363,6 +391,26 @@ async function findUtxoByState(validatorAddress, lucid, providerPubKeyHash, stat
         return datum.provider_key === providerPubKeyHash &&
             JSON.stringify(datum.state) === JSON.stringify(state);
     });
+}
+
+function valueMapToAssets(valueMap) {
+    const assets = {};
+
+    if (!valueMap) {
+        return assets;
+    }
+
+    for (const [policyId, assetMap] of valueMap.entries()) {
+        for (const [assetName, quantity] of assetMap.entries()) {
+            const unit = policyId === '' && assetName === ''
+                ? 'lovelace'
+                : `${policyId}${assetName}`;
+
+            assets[unit] = BigInt(quantity);
+        }
+    }
+
+    return assets;
 }
 
 async function requestCertificateFromIssuer(

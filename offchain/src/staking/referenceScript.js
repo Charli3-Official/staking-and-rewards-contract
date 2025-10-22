@@ -1,6 +1,5 @@
 import { stakingValidator } from './validator.js';
 import { mkBlockfrost, blockfrostProvider } from '../provider.js';
-import { addressDatum } from '../../data_helper.js';
 import { findReferenceScriptUtxo } from '../utxo_helper.js';
 import { Lucid, Data, C } from 'lucid-cardano';
 
@@ -18,9 +17,11 @@ export async function createReferenceScript() {
     const { api_key, network } = blockfrostProvider();
     const lucid = (await Lucid.new(mkBlockfrost(network, api_key), network)).selectWalletFromPrivateKey(operatorSkey);
     const operatorPubKeyHash = lucid.utils.getAddressDetails(operatorAddress).paymentCredential.hash;
-    const operatorAddr = addressDatum(operatorPubKeyHash);
+
+    const penaltyAddr = lucid.utils.credentialToAddress({ type: "Key", hash: operatorPubKeyHash });
+    console.log(`Operator penalty address: ${penaltyAddr}`);
     const vkeyBytes = C.PrivateKey.from_bech32(operatorSkey).to_public().as_bytes();
-    const stakingScript = stakingValidator(vkeyBytes, operatorAddr);
+    const stakingScript = stakingValidator(vkeyBytes, operatorPubKeyHash);
 
     const validatorAddress = lucid.utils.validatorToAddress(stakingScript);
     const scriptHash = lucid.utils.validatorToScriptHash(stakingScript);
@@ -29,7 +30,7 @@ export async function createReferenceScript() {
     console.log(`Script Hash: ${scriptHash}`);
 
     const existingRefScript = await findReferenceScriptUtxo(lucid, validatorAddress);
-    
+
     if (existingRefScript) {
         console.log('\n✅ Reference script already exists!');
         console.log(`UTXO: ${existingRefScript.txHash}#${existingRefScript.outputIndex}`);

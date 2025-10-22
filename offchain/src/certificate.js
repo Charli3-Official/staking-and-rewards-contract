@@ -16,7 +16,6 @@ export async function requestCertificate(operationType, stakingUtxo, providerUtx
         }
 
         console.log('Requesting certificate from issuer:', CONFIG.CERTIFICATE_ISSUER_API_URL + '/certificate/issue');
-        console.log('Request body:', requestBody);
 
         const response = await fetch(CONFIG.CERTIFICATE_ISSUER_API_URL + '/certificate/issue', {
             method: 'POST',
@@ -27,8 +26,23 @@ export async function requestCertificate(operationType, stakingUtxo, providerUtx
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Certificate issuer API request failed with status ${response.status}: ${errorText}`);
+            let errorMessage = `Certificate issuer API request failed with status ${response.status}`;
+
+            try {
+                const errorData = await response.json();
+                if (errorData.error && errorData.error.message) {
+                    errorMessage = errorData.error.message;
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch (parseError) {
+                const errorText = await response.text();
+                if (errorText) {
+                    errorMessage += `: ${errorText}`;
+                }
+            }
+
+            throw new Error(errorMessage);
         }
 
         const data = await response.json();
@@ -37,11 +51,10 @@ export async function requestCertificate(operationType, stakingUtxo, providerUtx
             throw new Error('Invalid API response: missing certificate data');
         }
 
-        console.log('Received certificate from issuer:', data.certificate);
+        console.log('Certificate received successfully');
         return data.certificate;
 
     } catch (error) {
-        console.error('Error requesting certificate from API:', error);
         throw error;
     }
 }
