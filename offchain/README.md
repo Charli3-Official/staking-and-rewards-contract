@@ -32,6 +32,14 @@ OPERATOR_SKEY=<operator_signing_key>
 
 ## Usage
 
+### Generate Operator Keys
+Creates a fresh operator address, verification key, and signing key. Outputs the values and stores them in `operator_keys/operator.vkey.bech32`, `operator_keys/operator.skey.bech32`, and `operator_keys/operator.enterprise.addr`.
+```bash
+npm start create-operator-key [output-directory]
+```
+If `output-directory` is omitted, the keys are placed in `./operator_keys`.
+The command prints Bech32 strings you can copy into your `.env` as `OPERATOR_ADDRESS`, `OPERATOR_VKEY`, and `OPERATOR_SKEY`.
+
 ### Create Reference Script (Required First Time)
 Before using staking operations, create a reference script UTXO:
 ```bash
