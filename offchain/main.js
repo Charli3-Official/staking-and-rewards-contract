@@ -53,7 +53,7 @@ switch (args[0].toLowerCase()) {
         try {
             await doRetireStake(args.splice(1));
         } catch (error) {
-            console.error("Error retiring stake:", error.message);
+            console.error("Error retiring stake:", error.message || error);
             process.exit(1);
         }
         break;
@@ -62,7 +62,7 @@ switch (args[0].toLowerCase()) {
         try {
             await doStakeWithdraw(args.splice(1));
         } catch (error) {
-            console.error("Error withdrawing stake:", error.message);
+            console.error("Error withdrawing stake:", error.message || error);
             process.exit(1);
         }
         break;

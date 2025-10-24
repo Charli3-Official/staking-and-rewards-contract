@@ -355,7 +355,6 @@ async function findStakingUtxo(validatorAddress, lucid, filterPredicate) {
     );
 
     const validUtxos = parsedUtxos.filter(result => result !== null);
-    console.log(`${validUtxos.length} UTXO(s) with valid staking datum`);
 
     const matchingUtxo = validUtxos.find(filterPredicate);
 
