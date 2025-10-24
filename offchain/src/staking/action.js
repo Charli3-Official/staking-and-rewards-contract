@@ -5,6 +5,7 @@ import { requestCertificate, createSignaturePayload } from '../certificate';
 import { tokenDatum } from '../../data_helper';
 import { blockfrostProvider } from '../provider'
 import { findReferenceScriptUtxo } from '../utxo_helper';
+import { confirmOperation } from '../utils.js';
 
 import { CONFIG } from '../config';
 
@@ -27,11 +28,22 @@ export async function sendStake({ value, provider_address, locked_until }) {
     };
 
     const parsedDatum = await to_stake_datum(stakeDatum);
-    console.log(`Datum Hash: ${lucid.utils.datumToHash(parsedDatum)}`);
 
     const tx = await lucid.newTx()
         .payToContract(validatorAddress, parsedDatum, value)
         .complete();
+
+    const confirmed = await confirmOperation('Submit Place Stake Transaction', {
+        'Transaction Type': 'Place Stake',
+        'Amount': Object.entries(value).map(([k, v]) => `${v} ${k}`).join(', '),
+        'Provider': provider_address,
+        'Validator': validatorAddress,
+        'Note': 'This will lock the tokens in the staking contract',
+    });
+    if (!confirmed) {
+        console.log('Transaction cancelled.');
+        return null;
+    }
 
     const signedTx = await tx.sign().complete();
     const txHash = await signedTx.submit();
@@ -99,7 +111,6 @@ export async function retireStake({ inUtxo, provider_addr }) {
 
     const parsedOutputDatum = Data.to(outputDatum, StakeDatum);
     const outputDatumHash = lucid.utils.datumToHash(parsedOutputDatum);
-    console.log(`Output Datum Hash: ${outputDatumHash}`);
 
     const redeemer = Reedemer.retire(outputDatumHash, certificate.signature);
 
@@ -119,6 +130,21 @@ export async function retireStake({ inUtxo, provider_addr }) {
         .validFrom(validFromTime)
         .validTo(certificateExpiry)
         .complete();
+
+    const confirmed = await confirmOperation('Submit Retire Stake Transaction', {
+        'Transaction Type': 'Retire Stake',
+        'Staking UTXO': stakingUtxo.txHash + '#' + stakingUtxo.outputIndex,
+        'Amount': Object.entries(stakingUtxo.assets).map(([k, v]) => `${v} ${k}`).join(', '),
+        'Provider': provider_addr,
+        'Validator': validatorAddress,
+        'New State': 'Retiring',
+        'Certificate Expiry': new Date(certificateExpiry).toISOString(),
+        'Note': 'This will initiate the retirement process',
+    });
+    if (!confirmed) {
+        console.log('Transaction cancelled.');
+        return null;
+    }
 
     const signedTx = await tx.sign().complete();
     const txHash = await signedTx.submit();
@@ -194,7 +220,6 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr }) {
 
     const parsedOutputDatum = Data.to(outputDatum, StakeDatum);
     const outputDatumHash = lucid.utils.datumToHash(parsedOutputDatum);
-    console.log(`Output Datum Hash: ${outputDatumHash}`);
 
     const redeemer = Reedemer.withdraw(outputDatumHash, certificate.signature);
 
@@ -230,6 +255,24 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr }) {
     );
 
     const txComplete = await tx.complete();
+
+    const penaltyDetails = penaltyFee > 0n ? `Penalty: ${penaltyFee} ${tokenUnit} to ${penalty_addr}` : 'No penalty';
+    const confirmed = await confirmOperation('Submit Withdraw Stake Transaction', {
+        'Transaction Type': 'Withdraw Stake',
+        'Staking UTXO': stakingUtxo.txHash + '#' + stakingUtxo.outputIndex,
+        'Staked Amount': `${currentStakeAmount} ${tokenUnit}`,
+        'Approved Amount': `${amountApproved} ${tokenUnit}`,
+        'Penalty': penaltyDetails,
+        'Provider': provider_addr,
+        'Validator': validatorAddress,
+        'Certificate Expiry': new Date(certificateExpiry).toISOString(),
+        'Note': 'This will withdraw the approved amount and apply any penalties',
+    });
+    if (!confirmed) {
+        console.log('Transaction cancelled.');
+        return null;
+    }
+
     const signedTx = await txComplete.sign().complete();
     const txHash = await signedTx.submit();
 
@@ -267,8 +310,6 @@ export async function resizeStake({ inUtxo, provider_addr, additional_value }) {
 
     const currentStakeAmount = stakingUtxo.assets[tokenId];
     const newStakeAmount = currentStakeAmount + additional_value;
-    console.log(`Current Stake: ${currentStakeAmount}`);
-    console.log(`New Stake: ${newStakeAmount}`);
 
     const providerUtxos = await lucid.utxosAt(provider_addr);
     if (!providerUtxos.length) {
@@ -301,16 +342,12 @@ export async function resizeStake({ inUtxo, provider_addr, additional_value }) {
 
     const parsedOutputDatum = Data.to(outputDatum, StakeDatum);
     const outputDatumHash = lucid.utils.datumToHash(parsedOutputDatum);
-    console.log(`Output Datum Hash: ${outputDatumHash}`);
 
     const redeemer = Reedemer.resize(outputDatumHash, certificate.signature);
 
     const refScriptUtxo = await findReferenceScriptUtxo(lucid, validatorAddress);
     const certificateExpiry = Number(certificate.expiresAt);
     const validFromTime = currentTime - 2 * 60 * 1000;
-
-    console.log(`Certificate Expiry: ${new Date(certificateExpiry).toISOString()}`);
-    console.log(`Valid From: ${new Date(validFromTime).toISOString()}`);
 
     const outputAssets = { ...stakingUtxo.assets, [tokenId]: newStakeAmount };
 
@@ -323,6 +360,22 @@ export async function resizeStake({ inUtxo, provider_addr, additional_value }) {
         .validFrom(validFromTime)
         .validTo(certificateExpiry)
         .complete();
+
+    const confirmed = await confirmOperation('Submit Resize Stake Transaction', {
+        'Transaction Type': 'Resize Stake',
+        'Staking UTXO': stakingUtxo.txHash + '#' + stakingUtxo.outputIndex,
+        'Current Amount': `${currentAmount} ${tokenId}`,
+        'Additional Amount': `${additional_value} ${tokenId}`,
+        'New Total': `${currentAmount + additional_value} ${tokenId}`,
+        'Provider': provider_addr,
+        'Validator': validatorAddress,
+        'Certificate Expiry': new Date(certificateExpiry).toISOString(),
+        'Note': 'This will increase the staked amount',
+    });
+    if (!confirmed) {
+        console.log('Transaction cancelled.');
+        return null;
+    }
 
     const signedTx = await tx.sign().complete();
     const txHash = await signedTx.submit();
@@ -347,8 +400,6 @@ async function findStakingUtxo(validatorAddress, lucid, filterPredicate) {
         console.log(`No UTXOs found at validator address: ${validatorAddress}`);
         return null;
     }
-
-    console.log(`Found ${utxos.length} UTXO(s) at validator address, filtering...`);
 
     const parsedUtxos = await Promise.all(
         utxos.map(utxo => parseStakingUtxo(utxo, lucid))

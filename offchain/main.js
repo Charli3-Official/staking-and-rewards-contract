@@ -23,7 +23,7 @@ if (!args[0]) {
 }
 
 console.log("........................................................")
-console.log("IAGON STAKING CLI ")
+console.log("CHARLI3 Node STAKING CLI ")
 console.log(".........................................................")
 
 // Handle uncaught exceptions
