@@ -409,9 +409,9 @@ export async function resizeStake({ inUtxo, provider_addr, additional_value }) {
   const confirmed = await confirmOperation("Submit Resize Stake Transaction", {
     "Transaction Type": "Resize Stake",
     "Staking UTXO": stakingUtxo.txHash + "#" + stakingUtxo.outputIndex,
-    "Current Amount": `${currentAmount} ${tokenId}`,
+    "Current Amount": `${currentStakeAmount} ${tokenId}`,
     "Additional Amount": `${additional_value} ${tokenId}`,
-    "New Total": `${currentAmount + additional_value} ${tokenId}`,
+    "New Total": `${currentStakeAmount + additional_value} ${tokenId}`,
     Provider: provider_addr,
     Validator: validatorAddress,
     "Certificate Expiry": new Date(certificateExpiry).toISOString(),
