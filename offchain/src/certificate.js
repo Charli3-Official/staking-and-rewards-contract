@@ -1,15 +1,69 @@
-import { C, fromHex, toHex } from "lucid-cardano";
+import { CONFIG } from './config.js';
 
-export const OPERATOR_KEYS = {
-    vkey: "ed25519_pk1tm2w0qd77a344337jee2w70cqfzlnjvd0a50eh4ulmpqw3pvk9qq92xhvr",
-    sKey: "ed25519_sk1t6a9trrju5qd30yjul5atvn02vkfwvw97zzekqkvcyrsndmtuynsfj49dz",
-    address: "addr_test1vpxssvd88399v96f3pwsd8mq9grsq80pc238nx4d2zfch4qq89u45"
+export async function requestCertificate(operationType, stakingUtxo, providerUtxo, providerKey, signature, timestamp, newValue = null) {
+    try {
+        const requestBody = {
+            operationType,
+            stakingUtxo,
+            providerUtxo,
+            providerKey,
+            signedMessage: signature,
+            timestamp
+        };
+
+        if (newValue !== null) {
+            requestBody.newValue = newValue.toString();
+        }
+
+        const response = await fetch(CONFIG.CERTIFICATE_ISSUER_API_URL + '/certificate/issue', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+            let errorMessage = `Certificate issuer API request failed with status ${response.status}`;
+
+            try {
+                const errorData = await response.json();
+                if (typeof errorData.error === 'string') {
+                    errorMessage = errorData.error;
+                } else if (errorData.error && errorData.error.message) {
+                    errorMessage = errorData.error.message;
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch (parseError) {
+                const errorText = await response.text();
+                if (errorText) {
+                    errorMessage += `: ${errorText}`;
+                }
+            }
+
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !data.certificate) {
+            throw new Error('Invalid API response: missing certificate data');
+        }
+
+        console.log('Certificate received successfully');
+        return data.certificate;
+
+    } catch (error) {
+        throw error;
+    }
 }
 
-export function vkey_as_bytes() {
-    return C.PrivateKey.from_bech32(OPERATOR_KEYS.sKey).to_public().as_bytes();
-}
-
-export function getSignature(msg) {
-    return C.PrivateKey.from_bech32(OPERATOR_KEYS.sKey).sign(fromHex(msg)).to_hex();
+export function createSignaturePayload(operationType, stakingUtxo, providerUtxo, timestamp) {
+    return JSON.stringify({
+        operationType,
+        stakingUtxo,
+        providerUtxo,
+        timestamp
+    });
 }

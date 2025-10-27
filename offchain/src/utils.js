@@ -1,12 +1,18 @@
-function policyIdAndAssetName(asset) {
-    if (asset == "lovelace") return ["", ""];
-    return asset.split("#");
-}
-//
-// Converts assets to plutus Data which is supported by aiken
-export async function valueToMap(assets) {
-    //m = new Map();
+import { createInterface } from 'readline';
 
-    // let parsedVal = Object.entries(assets).map()
-
+export async function confirmOperation(operationName, details) {
+    console.log(`\n=== ${operationName.toUpperCase()} CONFIRMATION ===`);
+    for (const [key, value] of Object.entries(details)) {
+        console.log(`${key}: ${value}`);
+    }
+    const rl = createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    return new Promise((resolve) => {
+        rl.question('Do you want to proceed? (y/N): ', (answer) => {
+            rl.close();
+            resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+        });
+    });
 }

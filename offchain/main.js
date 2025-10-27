@@ -1,150 +1,216 @@
-import { sendStake, retireStake, withdrawStake, resizeStake } from './src/staking/action';
-import { PROVIDER_1, PROVIDER_2, PROVIDER_3 } from './src/wallet';
-import { vkey_as_bytes, OPERATOR_KEYS } from './src/certificate';
-import { stakingValidator } from './src/staking/validator.js'
-import { addressDatum } from './data_helper'
-import { checkStakingDatumCborWithoutCert, checkStakingCertCbor, checkStakingDatumCborWithCert, checkStakingRedeemerCbor, checkRewardCertificateDatumCbor, checkRewardReedemerCbor } from './test'
-import { walletWithProvider } from './src/wallet'
-import { rewardValidator, placeReward, claimReward, reclaimReward } from './src/rewards/validator';
+import {
+  sendStake,
+  retireStake,
+  withdrawStake,
+  resizeStake,
+} from "./src/staking/action.js";
+import { createReferenceScript } from "./src/staking/referenceScript.js";
+import {
+  checkStakingDatumCborWithoutCert,
+  checkStakingCertCbor,
+  checkStakingDatumCborWithCert,
+  checkStakingRedeemerCbor,
+} from "./test.js";
+import { createOperatorKeys } from "./src/operator/createKeys.js";
+import path from "node:path";
+import { walletWithProvider } from "./src/wallet.js";
 
+import { CONFIG } from "./src/config.js";
 
-const lucid = await walletWithProvider({}, OPERATOR_KEYS.sKey)
+const lucid = await walletWithProvider({});
 
-let operatorAddr = lucid.utils.getAddressDetails(OPERATOR_KEYS.address).paymentCredential.hash
-let stValidator = stakingValidator(vkey_as_bytes(), addressDatum(operatorAddr));
+let penaltyAddress = CONFIG.PENALTY_ADDRESS;
 
-/// 
-// owner = Provider 3
-// Node storage provider = Provider 1
-let ownerPubKeyHash = lucid.utils.getAddressDetails(PROVIDER_3.address).paymentCredential.hash
-let rwdValidator = rewardValidator(vkey_as_bytes(), ownerPubKeyHash);
-
+///
+// owner = Provider
+// Node provider = Provider
+let providerAddress = await lucid.wallet.address();
 
 const args = process.argv.slice(2);
 if (!args[0]) {
-    console.log("Missing Commands");
+  console.log("Missing Commands");
+  console.log(
+    "Available commands: place-staking, retire-staking, withdraw-staking, resize-staking, create-ref-script, test-staking-cbor, help",
+  );
+  process.exit(1);
 }
 
-console.log("........................................................")
-console.log("IAGON STAKING CLI ")
-console.log(".........................................................")
+console.log("........................................................");
+console.log("CHARLI3 Node STAKING CLI ");
+console.log(".........................................................");
+
+// Handle uncaught exceptions
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error.message);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  process.exit(1);
+});
 
 switch (args[0].toLowerCase()) {
-    case "place-staking":
-        // handle place
-        placeStake(args.splice(1));
-        break;
+  case "place-staking":
+    // handle place
+    try {
+      await placeStake(args.splice(1));
+    } catch (error) {
+      console.error("Error placing stake:", error.message);
+      process.exit(1);
+    }
+    break;
 
-    case "retire-staking":
-        // Handle retire
-        doRetireStake(args.splice(1));
-        break;
+  case "retire-staking":
+    // Handle retire
+    try {
+      await doRetireStake(args.splice(1));
+    } catch (error) {
+      console.error("Error retiring stake:", error.message || error);
+      process.exit(1);
+    }
+    break;
 
-    case "withdraw-staking":
-        doStakeWithdraw(args.splice(1));
-        break;
+  case "withdraw-staking":
+    try {
+      await doStakeWithdraw(args.splice(1));
+    } catch (error) {
+      console.error("Error withdrawing stake:", error.message || error);
+      process.exit(1);
+    }
+    break;
 
-    case "resize-staking":
-        doResizeStake(args.splice(1));
-        break;
+  case "resize-staking":
+    try {
+      await doResizeStake(args.splice(1));
+    } catch (error) {
+      console.error("Error resizing stake:", error.message);
+      process.exit(1);
+    }
+    break;
 
-    case "place-reward":
-        doPlaceReward();
-        break;
+  case "create-ref-script":
+    try {
+      await doCreateRefScript(args.slice(1));
+    } catch (error) {
+      console.error("Error creating reference script:", error.message);
+      process.exit(1);
+    }
+    break;
 
-    case "claim-reward":
-        doClaimReward();
-        break;
+  case "help":
+    console.log("here will be help text");
+    break;
+  case "create-operator-key":
+  case "create-operators-key":
+    try {
+      await doCreateOperatorKey(args.slice(1));
+    } catch (error) {
+      console.error("Error creating operator keys:", error.message);
+      process.exit(1);
+    }
+    break;
 
-    case "reclaim-reward":
-        doReclaimReward();
-        break;
+  case "test-staking-cbor":
+    try {
+      await doTestCbor(args.splice(1));
+    } catch (error) {
+      console.error("Error testing CBOR:", error.message);
+      process.exit(1);
+    }
+    break;
 
-    case "help":
-        console.log("here will be help text");
-        break;
-
-    case "test-cbor":
-        doTestCbor(args.splice(1));
-        break;
-
-    default:
-        console.log("Invalid Action: ", args[0]);
+  default:
+    console.log("Invalid Action: ", args[0]);
+    console.log(
+      "Available commands: place-staking, retire-staking, withdraw-staking, resize-staking, create-ref-script, test-staking-cbor, help",
+    );
+    process.exit(1);
 }
 
-async function doPlaceReward(_args) {
-    // Placing 10 ADA to Reward Contract
-    const rewardTxId = await placeReward({
-        value: { lovelace: 10000000n },
-        owner_addr: PROVIDER_3.address
-    }, PROVIDER_3.signingKey, rwdValidator);
-    console.log(`Placed reward with TX:  ${rewardTxId}`);
-}
+async function doResizeStake(args) {
+  let amount = args[0];
+  if (!amount) {
+    console.log(
+      "Error: Please provide amount to add. Usage: npm start resize-staking <amount>",
+    );
+    return;
+  }
 
-async function doClaimReward(_args) {
-    const txId = await claimReward({ provider_addr: PROVIDER_1.address }, PROVIDER_1.signingKey, rwdValidator)
-    console.log(`Cliamed Reward with TX: ${txId}`);
-}
-
-async function doReclaimReward(_args) {
-    const txId = await reclaimReward({ owner_addr: PROVIDER_3.address }, PROVIDER_3.signingKey, rwdValidator);
-    console.log(`Reclaim Reward with TX:  ${txId}`);
-}
-
-async function doResizeStake(_args) {
-    let params = {
-        provider_addr: PROVIDER_1.address
-    };
-    resizeStake(params, PROVIDER_1.signingKey, stValidator)
+  let params = {
+    provider_addr: providerAddress,
+    additional_value: BigInt(amount),
+  };
+  await resizeStake(params);
 }
 
 async function doTestCbor(_args) {
-    console.log("\nStaking Cbor Test")
-    const stakingWithoutCertCheck = await checkStakingDatumCborWithoutCert()
-    console.log(stakingWithoutCertCheck)
-    const stakingCertificateCheck = await checkStakingCertCbor()
-    console.log(stakingCertificateCheck)
-    const stakingDatumWithCertCheck = await checkStakingDatumCborWithCert()
-    console.log(stakingDatumWithCertCheck)
-    const stakingRedeemerDatumCheck = checkStakingRedeemerCbor()
-    console.log(stakingRedeemerDatumCheck)
-
-    console.log("\nReward Cbor Test")
-
-    const rwdCertDtmCborCheck = await checkRewardCertificateDatumCbor()
-    console.log(rwdCertDtmCborCheck)
-    const rwdRedeemerCborCheck = checkRewardReedemerCbor()
-    console.log(rwdRedeemerCborCheck)
+  console.log("\nStaking Cbor Test");
+  const stakingWithoutCertCheck = await checkStakingDatumCborWithoutCert();
+  console.log(stakingWithoutCertCheck);
+  const stakingCertificateCheck = await checkStakingCertCbor();
+  console.log(stakingCertificateCheck);
+  const stakingDatumWithCertCheck = await checkStakingDatumCborWithCert();
+  console.log(stakingDatumWithCertCheck);
+  const stakingRedeemerDatumCheck = checkStakingRedeemerCbor();
+  console.log(stakingRedeemerDatumCheck);
 }
 
 async function placeStake(args) {
-    let locked_until = args[0] || new Date().getTime()
-    let params = {
-        value: { lovelace: 5000000n },
-        provider_address: PROVIDER_1.address,
-        locked_until: BigInt(locked_until)
-    };
+  let amount = args[0];
+  let token = `${CONFIG.TOKEN_POLICY_ID}${CONFIG.TOKEN_ASSET_NAME}`;
+  let locked_until = new Date().getTime();
+  let params = {
+    value: { [token]: BigInt(amount) },
+    provider_address: providerAddress,
+    locked_until: BigInt(locked_until),
+  };
 
-    const tx = await sendStake(params, PROVIDER_1.signingKey, stValidator);
-    console.log("Submited TX: ", tx);
+  const tx = await sendStake(params);
+  console.log("Submited TX: ", tx);
 }
 
 async function doStakeWithdraw(_args) {
-    let params = {
-        provider_addr: PROVIDER_1.address,
-        penalty_addr: OPERATOR_KEYS.address,
-        penalty_amount: BigInt(2000000)
-    }
-
-    return await withdrawStake(params, PROVIDER_1.signingKey, stValidator)
+  let params = {
+    provider_addr: providerAddress,
+    penalty_addr: penaltyAddress,
+  };
+  return await withdrawStake(params);
 }
 
 async function doRetireStake(args) {
-    let utxo = args[0]
-    let params = {
-        utxo: utxo,
-        provider_addr: PROVIDER_1.address
-    }
+  let utxo = args[0];
+  let params = {
+    inUtxo: utxo,
+    provider_addr: providerAddress,
+  };
+  await retireStake(params);
+}
 
-    await retireStake(params, PROVIDER_1.signingKey, stValidator);
+async function doCreateRefScript(_args) {
+  try {
+    await createReferenceScript();
+  } catch (error) {
+    console.error("Failed to create reference script:", error.message);
+  }
+}
+async function doCreateOperatorKey(args) {
+  const outputDir = args[0];
+  const results = await createOperatorKeys({ outputDir });
+
+  console.log("\nOperator keys generated");
+  console.log(`Operator address: ${results.operatorAddress}`);
+  console.log(`Operator verification key (Bech32): ${results.operatorVkey}`);
+  console.log(`Operator signing key (Bech32): ${results.operatorSkey}`);
+
+  console.log("\nSaved files:");
+  console.log(
+    `  - ${path.relative(process.cwd(), results.vkeyPath)} (verification key, bech32)`,
+  );
+  console.log(
+    `  - ${path.relative(process.cwd(), results.skeyPath)} (signing key, bech32)`,
+  );
+  console.log(
+    `  - ${path.relative(process.cwd(), results.addressPath)} (enterprise address)`,
+  );
 }
