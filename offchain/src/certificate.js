@@ -15,8 +15,6 @@ export async function requestCertificate(operationType, stakingUtxo, providerUtx
             requestBody.newValue = newValue.toString();
         }
 
-        console.log('Requesting certificate from issuer:', CONFIG.CERTIFICATE_ISSUER_API_URL + '/certificate/issue');
-
         const response = await fetch(CONFIG.CERTIFICATE_ISSUER_API_URL + '/certificate/issue', {
             method: 'POST',
             headers: {
@@ -30,7 +28,9 @@ export async function requestCertificate(operationType, stakingUtxo, providerUtx
 
             try {
                 const errorData = await response.json();
-                if (errorData.error && errorData.error.message) {
+                if (typeof errorData.error === 'string') {
+                    errorMessage = errorData.error;
+                } else if (errorData.error && errorData.error.message) {
                     errorMessage = errorData.error.message;
                 } else if (errorData.message) {
                     errorMessage = errorData.message;
