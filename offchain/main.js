@@ -3,14 +3,16 @@ import {
   retireStake,
   withdrawStake,
   resizeStake,
-} from "./src/staking/action";
+} from "./src/staking/action.js";
 import { createReferenceScript } from "./src/staking/referenceScript.js";
 import {
   checkStakingDatumCborWithoutCert,
   checkStakingCertCbor,
   checkStakingDatumCborWithCert,
   checkStakingRedeemerCbor,
-} from "./test";
+} from "./test.js";
+import { createOperatorKeys } from "./src/operator/createKeys.js";
+import path from "node:path";
 import { walletWithProvider } from "./src/wallet.js";
 
 import { CONFIG } from "./src/config.js";

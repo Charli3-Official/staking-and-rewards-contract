@@ -9,11 +9,11 @@ import {
 import { walletWithProvider } from "../wallet.js";
 import { requestCertificate, createSignaturePayload } from "../certificate.js";
 import { tokenDatum } from "../../data_helper.js";
-import { blockfrostProvider } from "../provider";
-import { findReferenceScriptUtxo } from "../utxo_helper";
+import { blockfrostProvider } from "../provider.js";
+import { findReferenceScriptUtxo } from "../utxo_helper.js";
 import { confirmOperation } from "../utils.js";
 
-import { CONFIG } from "../config";
+import { CONFIG } from "../config.js";
 
 export async function sendStake({ value, provider_address, locked_until }) {
   const lucid = await walletWithProvider(blockfrostProvider());
