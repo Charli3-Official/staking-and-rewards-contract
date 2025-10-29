@@ -102,7 +102,6 @@ switch (args[0].toLowerCase()) {
     console.log("here will be help text");
     break;
   case "create-operator-key":
-  case "create-operators-key":
     try {
       await doCreateOperatorKey(args.slice(1));
     } catch (error) {
@@ -139,7 +138,7 @@ async function doResizeStake(args) {
 
   let params = {
     provider_addr: providerAddress,
-    additional_value: BigInt(amount),
+    additional_value: BigInt(parseFloat(amount) * 10 ** CONFIG.TOKEN_DECIMALS),
   };
   await resizeStake(params);
 }
@@ -161,13 +160,12 @@ async function placeStake(args) {
   let token = `${CONFIG.TOKEN_POLICY_ID}${CONFIG.TOKEN_ASSET_NAME}`;
   let locked_until = new Date().getTime();
   let params = {
-    value: { [token]: BigInt(amount) },
+    value: { [token]: BigInt(parseFloat(amount) * 10 ** CONFIG.TOKEN_DECIMALS) },
     provider_address: providerAddress,
     locked_until: BigInt(locked_until),
   };
 
   const tx = await sendStake(params);
-  console.log("Submited TX: ", tx);
 }
 
 async function doStakeWithdraw(_args) {
