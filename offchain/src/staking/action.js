@@ -75,11 +75,11 @@ export async function retireStake({ inUtxo, provider_addr }) {
   const stakingUtxoWithDatum = await (inUtxo
     ? parseStakingUtxo(inUtxo, lucid)
     : findActiveStakingUtxo(
-        validatorAddress,
-        lucid,
-        providerPubKeyHash,
-        currentTime,
-      ));
+      validatorAddress,
+      lucid,
+      providerPubKeyHash,
+      currentTime,
+    ));
 
   if (!stakingUtxoWithDatum) {
     console.error("\nNo eligible staking UTXO found for retirement.");
@@ -187,11 +187,11 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr }) {
   const stakingUtxoWithDatum = await (inUtxo
     ? parseStakingUtxo(inUtxo, lucid)
     : findRetiringStakingUtxo(
-        validatorAddress,
-        lucid,
-        providerPubKeyHash,
-        currentTime,
-      ));
+      validatorAddress,
+      lucid,
+      providerPubKeyHash,
+      currentTime,
+    ));
 
   if (!stakingUtxoWithDatum) {
     console.error("No eligible staking UTXO found for withdrawal.");
@@ -279,6 +279,10 @@ export async function withdrawStake({ inUtxo, penalty_addr, provider_addr }) {
     tx = tx.payToAddress(penalty_addr, penaltyAssets);
   }
 
+  if (isAda) {
+    contractAssets.lovelace = 2000000n;
+  }
+
   tx = tx.payToContract(
     validatorAddress,
     { asHash: parsedOutputDatum },
@@ -323,7 +327,10 @@ export async function resizeStake({ inUtxo, provider_addr, additional_value }) {
     lucid.utils.getAddressDetails(provider_addr).paymentCredential.hash;
   const validatorAddress = CONFIG.STAKING_CONTRACT_ADDRESS;
   const currentTime = lucid.utils.slotToUnixTime(lucid.currentSlot());
-  const tokenId = `${CONFIG.TOKEN_POLICY_ID}${CONFIG.TOKEN_ASSET_NAME}`;
+  let tokenId = `${CONFIG.TOKEN_POLICY_ID}${CONFIG.TOKEN_ASSET_NAME}`;
+  if (tokenId === "") {
+    tokenId = "lovelace";
+  }
 
   console.log(`\n=== RESIZE STAKE ===`);
   console.log(`Provider Address: ${provider_addr}`);
@@ -332,11 +339,11 @@ export async function resizeStake({ inUtxo, provider_addr, additional_value }) {
   const stakingUtxoWithDatum = await (inUtxo
     ? parseStakingUtxo(inUtxo, lucid)
     : findUtxoByState(
-        validatorAddress,
-        lucid,
-        providerPubKeyHash,
-        StakingState.active,
-      ));
+      validatorAddress,
+      lucid,
+      providerPubKeyHash,
+      StakingState.active,
+    ));
 
   if (!stakingUtxoWithDatum) {
     console.error("\nNo eligible active staking UTXO found for resizing.");
@@ -431,8 +438,17 @@ export async function resizeStake({ inUtxo, provider_addr, additional_value }) {
 
 async function parseStakingUtxo(utxo, lucid) {
   try {
-    const datum = await lucid.datumOf(utxo, StakeDatum);
-    return { utxo, datum };
+    let utxoObj = utxo;
+    if (typeof utxo === "string") {
+      const [txHash, outputIndex] = utxo.split("#");
+      const utxos = await lucid.utxosByOutRef([
+        { txHash, outputIndex: parseInt(outputIndex) },
+      ]);
+      if (utxos.length === 0) return null;
+      utxoObj = utxos[0];
+    }
+    const datum = await lucid.datumOf(utxoObj, StakeDatum);
+    return { utxo: utxoObj, datum };
   } catch (error) {
     return null;
   }
