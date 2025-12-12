@@ -158,6 +158,9 @@ async function doTestCbor(_args) {
 async function placeStake(args) {
   let amount = args[0];
   let token = `${CONFIG.TOKEN_POLICY_ID}${CONFIG.TOKEN_ASSET_NAME}`;
+  if (token === "") {
+    token = "lovelace";
+  }
   let locked_until = new Date().getTime();
   let params = {
     value: { [token]: BigInt(parseFloat(amount) * 10 ** CONFIG.TOKEN_DECIMALS) },
@@ -168,8 +171,10 @@ async function placeStake(args) {
   const tx = await sendStake(params);
 }
 
-async function doStakeWithdraw(_args) {
+async function doStakeWithdraw(args) {
+  let utxo = args[0];
   let params = {
+    inUtxo: utxo,
     provider_addr: providerAddress,
     penalty_addr: penaltyAddress,
   };
