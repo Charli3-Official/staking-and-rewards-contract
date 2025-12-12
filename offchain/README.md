@@ -15,8 +15,8 @@ CARDANO_NETWORK=Mainnet
 PROVIDER_MNEMONIC=<your_24_word_mnemonic>
 
 # Token Configuration
-TOKEN_POLICY_ID=<token_policy_id>
-TOKEN_ASSET_NAME=<token_asset_name>
+TOKEN_POLICY_ID=<token_policy_id> # Leave empty to use ADA (lovelace)
+TOKEN_ASSET_NAME=<token_asset_name> # Leave empty to use ADA (lovelace)
 
 # Certificate Issuer API
 CERTIFICATE_ISSUER_API_URL=<certificate_issuer_api_url>
@@ -39,7 +39,7 @@ This will place staking using your provider wallet
 ### Retire Staking
 
 ```bash
-npm start retire-staking
+npm start retire-staking [tx_hash#index]
 ```
 
 This will request Staking to retire
@@ -47,7 +47,7 @@ This will request Staking to retire
 ### Resize Staking
 
 ```bash
-npm start resize-staking <additional_amount>
+npm start resize-staking <additional_amount> [tx_hash#index]
 ```
 
 Will Resize previous stake by adding the specified amount to the existing active stake.
@@ -55,7 +55,7 @@ Will Resize previous stake by adding the specified amount to the existing active
 ### Withdraw Staking
 
 ```bash
-npm start withdraw-staking
+npm start withdraw-staking [tx_hash#index]
 ```
 
 Will withdraw staking from the contract
